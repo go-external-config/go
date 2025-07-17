@@ -46,6 +46,9 @@ func (p *PatternProcessor) ProcessRecursive(str string, recursive bool) string {
 	return resolved
 }
 
-func (p *PatternProcessor) OverrideResolve(f func(*lang.RegexpMatch) string) {
-	p.resolve = f
+func (p *PatternProcessor) OverrideResolve(f func(*lang.RegexpMatch,
+	func(*lang.RegexpMatch) string) string) {
+
+	super := p.resolve
+	p.resolve = func(rm *lang.RegexpMatch) string { return f(rm, super) }
 }

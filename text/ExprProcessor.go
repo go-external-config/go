@@ -20,7 +20,9 @@ func NewExprProcessor() *ExprProcessor {
 	return &processor
 }
 
-func (p *ExprProcessor) Resolve(match *lang.RegexpMatch) string {
+func (p *ExprProcessor) Resolve(match *lang.RegexpMatch,
+	super func(*lang.RegexpMatch) string) string {
+
 	expression := lang.FirstNonEmpty(match.NamedGroup("long"), match.NamedGroup("short"))
 	value, ok := p.context[expression]
 	if ok {
