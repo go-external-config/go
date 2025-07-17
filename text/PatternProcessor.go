@@ -9,13 +9,13 @@ import (
 
 type PatternProcessor struct {
 	regexp  *regexp.Regexp
-	resolve func(matcher string) string
+	resolve func(*lang.RegexpMatch) string
 }
 
-func NewtPatternProcessor(pattern string) *PatternProcessor {
+func NewPatternProcessor(pattern string) *PatternProcessor {
 	return &PatternProcessor{
 		regexp:  regexp.MustCompile(lang.If(strings.HasPrefix(pattern, "(?"), pattern, "(?ms)"+pattern)),
-		resolve: func(matcher string) string { panic("Not implemented") }}
+		resolve: func(*lang.RegexpMatch) string { panic("Not implemented") }}
 }
 
 func (p *PatternProcessor) Process(str string) string {
@@ -30,20 +30,22 @@ func (p *PatternProcessor) ProcessRecursive(str string, recursive bool) string {
 	for {
 		var sb strings.Builder
 		before = resolved
-		matched := p.regexp.FindAllStringIndex(resolved, -1)
+		matched := p.regexp.FindAllStringSubmatchIndex(resolved, -1)
 		lastMatch := []int{0, 0}
-		for idx, match := range matched {
+		for _, match := range matched {
 			sb.WriteString(resolved[lastMatch[1]:match[0]])
-			sb.WriteString(p.resolve(resolved[match[0]:match[1]]))
-			if idx == len(matched)-1 {
-				sb.WriteString(resolved[match[1]:])
-			}
+			sb.WriteString(p.resolve(lang.NewRegexpMatch(p.regexp, resolved, match)))
 			lastMatch = match
 		}
+		sb.WriteString(resolved[lastMatch[1]:])
 		resolved = sb.String()
 		if !recursive || before == resolved {
 			break
 		}
 	}
 	return resolved
+}
+
+func (p *PatternProcessor) SetResolve(f func(*lang.RegexpMatch) string) {
+	p.resolve = f
 }

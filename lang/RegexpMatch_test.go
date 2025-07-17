@@ -1,0 +1,27 @@
+package lang_test
+
+import (
+	"regexp"
+	"testing"
+
+	"github.com/madamovych/go/lang"
+	"github.com/stretchr/testify/require"
+)
+
+func Test_RegexpMatch(t *testing.T) {
+	t.Run("should produce sane results'", func(t *testing.T) {
+		pattern := regexp.MustCompile("\\$\\$\\{(?P<long>.*?)\\}\\$|\\$\\{(?P<short>.*?)\\}")
+		str := `To be, or not to be: that is the ${question}:
+			Whether 'tis nobler in the mind to suffer
+			The slings and arrows of outrageous fortune,
+			Or to take arms against a sea of troubles,
+			And by opposing end them? To die: to sleep;`
+
+		for _, m := range pattern.FindAllStringSubmatchIndex(str, -1) {
+			match := lang.NewRegexpMatch(pattern, str, m)
+			require.Equal(t, "${question}", match.Expr())
+			require.Equal(t, "question", match.Group(2))
+			require.Equal(t, "question", match.NamedGroup("short"))
+		}
+	})
+}
