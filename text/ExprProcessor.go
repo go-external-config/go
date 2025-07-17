@@ -26,7 +26,7 @@ func (p *ExprProcessor) Resolve(match *lang.RegexpMatch) string {
 	if ok {
 		return fmt.Sprintf("%v", value)
 	}
-	return fmt.Sprintf("%v", lang.OptionalCommaErr(expr.Eval(expression, p.context)).
+	return fmt.Sprintf("%v", lang.OptionalOfCommaErr(expr.Eval(expression, p.context)).
 		OrElsePanic(fmt.Sprintf("Cannot evaluate '%s'", expression)))
 }
 

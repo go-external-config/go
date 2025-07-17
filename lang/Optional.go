@@ -18,14 +18,14 @@ func OptionalValue[T any](value T) *Optional[T] {
 		present: true}
 }
 
-func OptionalCommaOk[T any](value T, ok bool) *Optional[T] {
+func OptionalOfCommaOk[T any](value T, ok bool) *Optional[T] {
 	if !ok {
 		return OptionalEmpty[T]()
 	}
 	return OptionalValue(value)
 }
 
-func OptionalCommaErr[T any](value T, e error) *Optional[T] {
+func OptionalOfCommaErr[T any](value T, e error) *Optional[T] {
 	if e != nil {
 		return &Optional[T]{
 			err: e,
