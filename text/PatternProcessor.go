@@ -34,7 +34,7 @@ func (p *PatternProcessor) ProcessRecursive(str string, recursive bool) string {
 		lastMatch := []int{0, 0}
 		for _, match := range matched {
 			sb.WriteString(resolved[lastMatch[1]:match[0]])
-			sb.WriteString(p.resolve(lang.NewRegexpMatch(p.regexp, resolved, match)))
+			sb.WriteString(p.resolve(lang.RegexpMatchOf(p.regexp, resolved, match)))
 			lastMatch = match
 		}
 		sb.WriteString(resolved[lastMatch[1]:])

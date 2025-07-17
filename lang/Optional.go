@@ -8,11 +8,11 @@ type Optional[T any] struct {
 	err     error
 }
 
-func OptionalEmpty[T any]() *Optional[T] {
+func OptionalOfEmpty[T any]() *Optional[T] {
 	return &Optional[T]{present: false}
 }
 
-func OptionalValue[T any](value T) *Optional[T] {
+func OptionalOfValue[T any](value T) *Optional[T] {
 	return &Optional[T]{
 		value:   value,
 		present: true}
@@ -20,9 +20,9 @@ func OptionalValue[T any](value T) *Optional[T] {
 
 func OptionalOfCommaOk[T any](value T, ok bool) *Optional[T] {
 	if !ok {
-		return OptionalEmpty[T]()
+		return OptionalOfEmpty[T]()
 	}
-	return OptionalValue(value)
+	return OptionalOfValue(value)
 }
 
 func OptionalOfCommaErr[T any](value T, e error) *Optional[T] {
@@ -31,15 +31,15 @@ func OptionalOfCommaErr[T any](value T, e error) *Optional[T] {
 			err: e,
 		}
 	}
-	return OptionalValue(value)
+	return OptionalOfValue(value)
 }
 
-func OptionalEntry[K comparable, V any](m map[K]V, key K) *Optional[V] {
+func OptionalOfEntry[K comparable, V any](m map[K]V, key K) *Optional[V] {
 	value, ok := m[key]
 	if !ok {
-		return OptionalEmpty[V]()
+		return OptionalOfEmpty[V]()
 	}
-	return OptionalValue(value)
+	return OptionalOfValue(value)
 }
 
 func (o *Optional[T]) Present() bool {

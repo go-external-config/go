@@ -8,7 +8,7 @@ type RegexpMatch struct {
 	subexpByName map[string]string
 }
 
-func NewRegexpMatch(regexp *regexp.Regexp, str string, matched []int) *RegexpMatch {
+func RegexpMatchOf(regexp *regexp.Regexp, str string, matched []int) *RegexpMatch {
 	subexpCount := len(regexp.SubexpNames())
 	result := RegexpMatch{
 		expr:         str[matched[0]:matched[1]],
