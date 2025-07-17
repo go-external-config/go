@@ -12,7 +12,7 @@ type PatternProcessor struct {
 	resolve func(*lang.RegexpMatch) string
 }
 
-func NewPatternProcessor(pattern string) *PatternProcessor {
+func PatternProcessorOf(pattern string) *PatternProcessor {
 	return &PatternProcessor{
 		regexp:  regexp.MustCompile(lang.If(strings.HasPrefix(pattern, "(?"), pattern, "(?ms)"+pattern)),
 		resolve: func(*lang.RegexpMatch) string { panic("Not implemented") }}
@@ -46,6 +46,6 @@ func (p *PatternProcessor) ProcessRecursive(str string, recursive bool) string {
 	return resolved
 }
 
-func (p *PatternProcessor) SetResolve(f func(*lang.RegexpMatch) string) {
+func (p *PatternProcessor) OverrideResolve(f func(*lang.RegexpMatch) string) {
 	p.resolve = f
 }
