@@ -15,11 +15,12 @@ func Test_ExprProcessor_Process_DummyVariable(t *testing.T) {
 	})
 }
 
-func Test_ExprProcessor_Process_StructVariable(t *testing.T) {
+func Test_ExprProcessor_Process_ComplexVariable(t *testing.T) {
 	t.Run("should substitute variable", func(t *testing.T) {
 		processor := text.NewExprProcessor()
 		processor.Define("person", map[string]any{"name": "Mike"})
-		require.Equal(t, " Hello Mike! ", processor.Process(" Hello ${person.name}! "))
+		processor.Define("property", "name")
+		require.Equal(t, " Hello Mike! ", processor.Process(" Hello ${person.${property}}! "))
 	})
 }
 

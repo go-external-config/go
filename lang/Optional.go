@@ -47,6 +47,7 @@ func (o *Optional[T]) Present() bool {
 }
 
 func (o *Optional[T]) Value() T {
+	o.panicIfEmpty("No value present")
 	return o.value
 }
 
@@ -54,11 +55,15 @@ func (o *Optional[T]) OrElse(value T) T {
 	return If(o.present, o.value, value)
 }
 
-func (o *Optional[T]) OrElsePanic(msg string) T {
-	if o.err != nil {
-		panic(fmt.Errorf("%s\nCaused by: %v", msg, o.err.Error()))
-	} else if !o.present {
-		panic(msg)
-	}
+func (o *Optional[T]) OrElsePanic(format string, a ...any) T {
+	o.panicIfEmpty(format, a...)
 	return o.value
+}
+
+func (o *Optional[T]) panicIfEmpty(format string, a ...any) {
+	if o.err != nil {
+		panic(fmt.Errorf("%s\nCaused by: %v", fmt.Sprintf(format, a...), o.err.Error()))
+	} else if !o.present {
+		panic(fmt.Sprintf(format, a...))
+	}
 }

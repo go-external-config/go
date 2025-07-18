@@ -10,7 +10,7 @@ import (
 
 func Test_RegexpMatch(t *testing.T) {
 	t.Run("should produce sane results'", func(t *testing.T) {
-		pattern := regexp.MustCompile("\\$\\$\\{(?P<long>.*?)\\}\\$|\\$\\{(?P<short>.*?)\\}")
+		pattern := regexp.MustCompile(`\$\$\{(?P<long>.*?)\}\$|\$\{(?P<short>.*?)\}`)
 		str := `To be, or not to be: that is the ${question}:
 			Whether 'tis nobler in the mind to suffer
 			The slings and arrows of outrageous fortune,
