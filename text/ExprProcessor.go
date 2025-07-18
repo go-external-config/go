@@ -14,7 +14,7 @@ type ExprProcessor struct {
 
 func NewExprProcessor() *ExprProcessor {
 	processor := ExprProcessor{
-		PatternProcessor: *PatternProcessorOf(`\$\$\{(?P<long>([^\$]|\$[^\{])*?)\}\$|\$\{(?P<short>([^\$]|\$[^\{])*?)\}`),
+		PatternProcessor: *PatternProcessorOf(`\#\#\#\{(?P<complex>([^\$]|\$[^\{])*?)\}\#\#\#|\#\{(?P<expr>([^\$]|\$[^\{])*?)\}|\$\{(?P<prop>([^\$]|\$[^\{])*?)\}`),
 		context:          make(map[string]any)}
 	processor.OverrideResolve(processor.Resolve)
 	return &processor
@@ -23,11 +23,12 @@ func NewExprProcessor() *ExprProcessor {
 func (p *ExprProcessor) Resolve(match *lang.RegexpMatch,
 	super func(*lang.RegexpMatch) string) string {
 
-	expression := lang.FirstNonEmpty(match.NamedGroup("long"), match.NamedGroup("short"))
-	value, ok := p.context[expression]
-	if ok {
-		return fmt.Sprintf("%v", value)
+	prop := match.NamedGroup("prop")
+	if prop.Present() {
+		return fmt.Sprintf("%v", lang.OptionalOfEntry(p.context, prop.Value()).OrElse(match.Expr()))
 	}
+
+	expression := lang.FirstNonEmpty(match.NamedGroup("expr").OrElse(""), match.NamedGroup("complex").OrElse(""))
 	return fmt.Sprintf("%v", lang.OptionalOfCommaErr(expr.Eval(expression, p.context)).
 		OrElsePanic("Cannot evaluate '%s'", expression))
 }

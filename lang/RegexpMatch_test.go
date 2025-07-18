@@ -20,8 +20,11 @@ func Test_RegexpMatch(t *testing.T) {
 		for _, m := range pattern.FindAllStringSubmatchIndex(str, -1) {
 			match := lang.RegexpMatchOf(pattern, str, m)
 			require.Equal(t, "${question}", match.Expr())
-			require.Equal(t, "question", match.Group(2))
-			require.Equal(t, "question", match.NamedGroup("short"))
+			require.Equal(t, "question", match.Group(2).Value())
+			require.Equal(t, "question", match.NamedGroup("short").Value())
+			require.Equal(t, false, match.Group(1).Present())
+			require.Equal(t, true, match.NamedGroup("short").Present())
+			require.Equal(t, false, match.NamedGroup("long").Present())
 		}
 	})
 }

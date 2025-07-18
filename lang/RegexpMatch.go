@@ -4,7 +4,7 @@ import "regexp"
 
 type RegexpMatch struct {
 	expr         string
-	subexpByIdx  []string
+	subexpByIdx  map[int]string
 	subexpByName map[string]string
 }
 
@@ -12,7 +12,7 @@ func RegexpMatchOf(regexp *regexp.Regexp, str string, matched []int) *RegexpMatc
 	subexpCount := len(regexp.SubexpNames())
 	result := RegexpMatch{
 		expr:         str[matched[0]:matched[1]],
-		subexpByIdx:  make([]string, subexpCount),
+		subexpByIdx:  make(map[int]string, subexpCount),
 		subexpByName: make(map[string]string, subexpCount)}
 
 	for idx, name := range regexp.SubexpNames() {
@@ -28,17 +28,17 @@ func RegexpMatchOf(regexp *regexp.Regexp, str string, matched []int) *RegexpMatc
 }
 
 func (m *RegexpMatch) Expr() string {
-	return m.Group(0)
+	return m.Group(0).Value()
 }
 
 func (m *RegexpMatch) GroupCount() int {
 	return len(m.subexpByIdx)
 }
 
-func (m *RegexpMatch) Group(idx int) string {
-	return m.subexpByIdx[idx]
+func (m *RegexpMatch) Group(idx int) *Optional[string] {
+	return OptionalOfEntry(m.subexpByIdx, idx)
 }
 
-func (m *RegexpMatch) NamedGroup(name string) string {
-	return m.subexpByName[name]
+func (m *RegexpMatch) NamedGroup(name string) *Optional[string] {
+	return OptionalOfEntry(m.subexpByName, name)
 }
