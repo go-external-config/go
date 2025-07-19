@@ -1,11 +1,19 @@
 package lang
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Optional[T any] struct {
 	value   T
 	present bool
 	err     error
+}
+
+func OptionalOfNilable[T any](value T) *Optional[T] {
+	return &Optional[T]{
+		value:   value,
+		present: !IsNil(value)}
 }
 
 func OptionalOfEmpty[T any]() *Optional[T] {

@@ -1,8 +1,6 @@
 package env
 
 import (
-	"fmt"
-
 	"github.com/madamovych/go/lang"
 	"github.com/madamovych/go/text"
 )
@@ -43,7 +41,7 @@ func (s *PropertySource) ContainsProperty(key string) bool {
 }
 
 func (s *PropertySource) ResolvePlaceholders() {
-	processor := text.NewExprProcessor()
+	processor := text.ExprProcessorOf(false)
 	for todo := true; todo; {
 		todo = false
 		for key, value := range s.source {
@@ -55,9 +53,16 @@ func (s *PropertySource) ResolvePlaceholders() {
 					todo = true
 					s.source[key] = resolved
 					processor.Define(key, resolved)
-					fmt.Printf("%v: %v->%v\n", key, value, resolved)
+					// fmt.Printf("PropertySource[%v]: %v: %v -> %v\n", s.name, key, value, resolved)
 				}
 			}
+		}
+	}
+	processor.SetStrict(true)
+	for _, value := range s.source {
+		switch strValue := value.(type) {
+		case string:
+			processor.Process(strValue)
 		}
 	}
 }
