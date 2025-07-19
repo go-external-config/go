@@ -16,6 +16,22 @@ func Test_ExprProcessor_Process_DummyVariable(t *testing.T) {
 	})
 }
 
+func Test_ExprProcessor_Process_VariableNotDefined(t *testing.T) {
+	t.Run("should substitute variable", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r != nil {
+				switch x := r.(type) {
+				case string:
+					require.Equal(t, "Cannot resolve ${name}", x)
+				}
+			}
+		}()
+		processor := text.ExprProcessorOf(true)
+		processor.Process(" Hello ${name}! ")
+		require.Fail(t, "panic expected")
+	})
+}
+
 func Test_ExprProcessor_Process_ComplexVariable(t *testing.T) {
 	t.Run("should substitute variable", func(t *testing.T) {
 		processor := text.ExprProcessorOf(false)
