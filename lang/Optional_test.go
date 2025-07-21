@@ -10,6 +10,7 @@ import (
 func Test_Optional(t *testing.T) {
 	t.Run("should produce expected results'", func(t *testing.T) {
 		require.Equal(t, true, lang.OptionalOfNilable(0).Present())
+		require.Equal(t, true, lang.OptionalOfNilable("").Present())
 
 		var notInitializedAny any
 		require.Equal(t, false, lang.OptionalOfNilable(notInitializedAny).Present())
