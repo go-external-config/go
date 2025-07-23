@@ -18,7 +18,7 @@ func Test_RegexpMatch(t *testing.T) {
 			And by opposing end them? To die: to sleep;`
 
 		for _, m := range pattern.FindAllStringSubmatchIndex(str, -1) {
-			match := regex.RegexpMatchOf(pattern, str, m)
+			match := regex.MatchOf(pattern, str, m)
 			require.Equal(t, "${question}", match.Expr())
 			require.Equal(t, "question", match.Group(2).Value())
 			require.Equal(t, "question", match.NamedGroup("short").Value())

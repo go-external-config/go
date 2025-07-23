@@ -11,8 +11,8 @@ import (
 func Test_PatternProcessor_Process(t *testing.T) {
 	t.Run("should substitute 'World'", func(t *testing.T) {
 		processor := text.PatternProcessorOf("\\w+")
-		processor.OverrideResolve(func(match *regex.RegexpMatch,
-			super func(*regex.RegexpMatch) string) string {
+		processor.OverrideResolve(func(match *regex.Match,
+			super func(*regex.Match) string) string {
 
 			switch match.Expr() {
 			case "World":

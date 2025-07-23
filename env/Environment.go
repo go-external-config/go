@@ -78,7 +78,7 @@ func (e *Environment) loadEnvironmentVariables() {
 	pattern := regexp.MustCompile(`(?P<key>[^=\s]+)=(?P<value>.*)`)
 	for _, keyValue := range os.Environ() {
 		for _, m := range pattern.FindAllStringSubmatchIndex(keyValue, -1) {
-			match := regex.RegexpMatchOf(pattern, keyValue, m)
+			match := regex.MatchOf(pattern, keyValue, m)
 			key := match.NamedGroup("key").Value()
 			value := match.NamedGroup("value").Value()
 			environ.SetProperty(key, value)
@@ -94,7 +94,7 @@ func (e *Environment) loadApplicationParameters() {
 	pattern := regexp.MustCompile(`--?(?P<key>[^=\s]+)\s*=?(?P<value>.*)`)
 	for _, keyValue := range os.Args[1:] {
 		for _, m := range pattern.FindAllStringSubmatchIndex(keyValue, -1) {
-			match := regex.RegexpMatchOf(pattern, keyValue, m)
+			match := regex.MatchOf(pattern, keyValue, m)
 			key := match.NamedGroup("key").Value()
 			value := match.NamedGroup("value").Value()
 			params.SetProperty(key, value)
@@ -135,7 +135,7 @@ func (e *Environment) loadConfiguration(location, name, profile string) {
 	locationPattern := regexp.MustCompile(`(?P<location>.+)\[(?P<fantomExt>\.[\w]+)\]`)
 	var fantomExt string
 	for _, m := range locationPattern.FindAllStringSubmatchIndex(location, -1) {
-		match := regex.RegexpMatchOf(locationPattern, location, m)
+		match := regex.MatchOf(locationPattern, location, m)
 		location = match.NamedGroup("location").Value()
 		fantomExt = match.NamedGroup("fantomExt").Value()
 	}

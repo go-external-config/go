@@ -27,8 +27,8 @@ func ExprProcessorOf(strict bool) *ExprProcessor {
 	return &processor
 }
 
-func (p *ExprProcessor) Resolve(match *regex.RegexpMatch,
-	super func(*regex.RegexpMatch) string) (resolved string) {
+func (p *ExprProcessor) Resolve(match *regex.Match,
+	super func(*regex.Match) string) (resolved string) {
 	if !p.strict {
 		defer func() {
 			if recover() != nil {

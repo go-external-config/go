@@ -6,15 +6,15 @@ import (
 	"github.com/madamovych/go/util"
 )
 
-type RegexpMatch struct {
+type Match struct {
 	expr         string
 	subexpByIdx  map[int]string
 	subexpByName map[string]string
 }
 
-func RegexpMatchOf(regexp *regexp.Regexp, str string, matched []int) *RegexpMatch {
+func MatchOf(regexp *regexp.Regexp, str string, matched []int) *Match {
 	subexpCount := len(regexp.SubexpNames())
-	result := RegexpMatch{
+	result := Match{
 		expr:         str[matched[0]:matched[1]],
 		subexpByIdx:  make(map[int]string, subexpCount),
 		subexpByName: make(map[string]string, subexpCount)}
@@ -31,18 +31,18 @@ func RegexpMatchOf(regexp *regexp.Regexp, str string, matched []int) *RegexpMatc
 	return &result
 }
 
-func (m *RegexpMatch) Expr() string {
+func (m *Match) Expr() string {
 	return m.Group(0).Value()
 }
 
-func (m *RegexpMatch) GroupCount() int {
+func (m *Match) GroupCount() int {
 	return len(m.subexpByIdx)
 }
 
-func (m *RegexpMatch) Group(idx int) *util.Optional[string] {
+func (m *Match) Group(idx int) *util.Optional[string] {
 	return util.OptionalOfEntry(m.subexpByIdx, idx)
 }
 
-func (m *RegexpMatch) NamedGroup(name string) *util.Optional[string] {
+func (m *Match) NamedGroup(name string) *util.Optional[string] {
 	return util.OptionalOfEntry(m.subexpByName, name)
 }
