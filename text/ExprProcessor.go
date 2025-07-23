@@ -18,7 +18,7 @@ type ExprProcessor struct {
 
 func ExprProcessorOf(strict bool) *ExprProcessor {
 	processor := ExprProcessor{
-		PatternProcessor: *PatternProcessorOf(`\#\#\#\{(?P<complex>([^\$#]\{|[^\{])*?)\}\#\#\#|\#\{(?P<expr>([^\$#]\{|[^\{])*?)\}|\$\{(?P<prop>([^\$#]\{|[^\{])*?)\}`),
+		PatternProcessor: *PatternProcessorOf(`\#\#\#\{(?P<complex>([^\$#]\{|[^\{])*?)\}\#\#\#|\#\{(?P<expr>([^\$#]\{|[^\{])*?)\}|\$\{(?P<prop>([^\$#:]\{|[^\{\}:])*)(:(?P<defaultValue>([^\$#]\{|[^\{])*?))?\}`),
 		context:          make(map[string]any),
 		strict:           strict}
 	processor.OverrideResolve(processor.Resolve)
@@ -36,12 +36,20 @@ func (p *ExprProcessor) Resolve(match *lang.RegexpMatch,
 	}
 	prop := match.NamedGroup("prop")
 	if prop.Present() {
-		resolved = fmt.Sprintf("%v", lang.OptionalOfEntry(p.context, prop.Value()).OrElsePanic("Cannot resolve %s", match.Expr()))
+		resolvedValue := lang.OptionalOfEntry(p.context, prop.Value())
+		defaultValue := match.NamedGroup("defaultValue")
+		if resolvedValue.Present() {
+			resolved = fmt.Sprintf("%v", resolvedValue.Value())
+		} else if defaultValue.Present() {
+			resolved = defaultValue.Value()
+		} else {
+			panic(fmt.Sprintf("Cannot resolve %s", match.Expr()))
+		}
 	} else {
 		expression := lang.FirstNonEmpty(match.NamedGroup("expr").OrElse(""), match.NamedGroup("complex").OrElse(""))
 		resolved = fmt.Sprintf("%v", lang.OptionalOfNilable(p.eval(expression, p.context)).OrElsePanic("Cannot resolve %s", match.Expr()))
 	}
-	// fmt.Printf("ExprProcessor: %s -> %s\n", match.Expr(), resolved)
+	// slog.Debug(fmt.Sprintf("ExprProcessor: %s -> %s\n", match.Expr(), resolved))
 	return resolved
 }
 

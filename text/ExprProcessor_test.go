@@ -11,6 +11,7 @@ func Test_ExprProcessor_Process_DummyVariable(t *testing.T) {
 	t.Run("should substitute variable", func(t *testing.T) {
 		processor := text.ExprProcessorOf(false)
 		require.Equal(t, " Hello ${name}! ", processor.Process(" Hello ${name}! "))
+		require.Equal(t, " Hello Unknown! ", processor.Process(" Hello ${name:Unknown}! "))
 		processor.Define("name", "Mike")
 		require.Equal(t, " Hello Mike! ", processor.Process(" Hello ${name}! "))
 	})
