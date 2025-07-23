@@ -4,6 +4,7 @@ import (
 	"net/url"
 
 	"github.com/madamovych/go/lang"
+	"github.com/madamovych/go/util"
 )
 
 type ProtocolResolver interface {
@@ -32,7 +33,7 @@ func (l *ResourceLoader) Resource(location string) Resource {
 }
 
 func (l *ResourceLoader) Resolve(location string) Resource {
-	url := lang.OptionalOfCommaErr(url.Parse(location)).OrElsePanic("Cannot parse location %s", location)
+	url := util.OptionalOfCommaErr(url.Parse(location)).OrElsePanic("Cannot parse location %s", location)
 	schema := lang.FirstNonEmpty(url.Scheme, "file")
 	switch schema {
 	case "file":

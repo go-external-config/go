@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/madamovych/go/lang"
+	"github.com/madamovych/go/util"
 )
 
 type FileResource struct {
@@ -19,7 +19,7 @@ func NewFileResource(url *url.URL) *FileResource {
 }
 
 func (r *FileResource) Reader() io.Reader {
-	return lang.OptionalOfCommaErr(os.Open(r.url.Path)).OrElsePanic("Cannot open file %s", r.url.Path)
+	return util.OptionalOfCommaErr(os.Open(r.url.Path)).OrElsePanic("Cannot open file %s", r.url.Path)
 }
 
 func (r *FileResource) URL() *url.URL {
@@ -32,7 +32,7 @@ func (r *FileResource) CreateRelative(location string) Resource {
 }
 
 func (r *FileResource) Exists() bool {
-	return lang.OptionalOfCommaErr(os.Stat(r.url.Path)).OrElse(nil) != nil
+	return util.OptionalOfCommaErr(os.Stat(r.url.Path)).OrElse(nil) != nil
 }
 
 func (r *FileResource) Name() string {

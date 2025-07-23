@@ -13,8 +13,8 @@ func NewPropertiesPropertySource(name, content string) *PropertiesPropertySource
 	return &propertiesPropertySource
 }
 
-func (s *PropertiesPropertySource) propertiesFrom(content string) map[string]any {
-	result := make(map[string]any)
+func (s *PropertiesPropertySource) propertiesFrom(content string) map[string]string {
+	result := make(map[string]string)
 	for key, value := range properties.MustLoadString(content).Map() {
 		result[key] = value
 	}

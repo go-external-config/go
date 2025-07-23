@@ -1,5 +1,8 @@
 package env
 
 type PropertySource interface {
-	Properties() map[string]any
+	Name() string
+	HasProperty(key string) bool
+	Property(key string) string
+	Properties() map[string]string
 }

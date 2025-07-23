@@ -30,8 +30,8 @@ c:
 		source.ResolvePlaceholders()
 
 		require.Equal(t, "value1", source.Property("a.key1"))
-		require.Equal(t, 2.5, source.Property("a.key2"))
-		require.Equal(t, 5, source.Property("ab.key1"))
+		require.Equal(t, "2.5", source.Property("a.key2"))
+		require.Equal(t, "5", source.Property("ab.key1"))
 		require.Equal(t, "h", source.Property("ab.key2"))
 		require.Equal(t, "5", source.Property("c.array[0].value"))
 		require.Equal(t, "7.5", source.Property("c.array[1].sub-array[0].sub1"))
