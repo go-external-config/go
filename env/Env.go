@@ -14,7 +14,7 @@ func ActiveProfiles() []string {
 }
 
 // Activate additional profiles after bootstrap, last wins. Nothing happens if profile is already actived
-func ActiveteProfiles(profiles string) {
+func ActivateProfiles(profiles string) {
 	environment.loadApplicationConfiguration(profiles)
 }
 
