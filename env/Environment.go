@@ -163,10 +163,10 @@ func (e *Environment) loadConfiguration(location, name, profile string) {
 }
 
 func (e *Environment) tryLoad(resource io.Resource, fantomExt string) {
-	var result PropertySource
 	if !resource.Exists() {
 		return
 	}
+	var result PropertySource
 	slog.Info(fmt.Sprintf("Loading properties from %s", resource.URL().String()))
 	ext := lang.FirstNonEmpty(filepath.Ext(resource.URL().Path), fantomExt)
 	lang.AssertState(len(ext) != 0, "Cannot load from location %s. Either use '/' at the end if location supposed to be a directory or provide fantom extension like [.yaml] to derive property source type", resource.URL())

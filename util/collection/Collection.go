@@ -1,5 +1,7 @@
 package collection
 
+import "slices"
+
 func SliceToSet[T comparable](slice []T) map[T]any {
 	result := make(map[T]any)
 	for _, value := range slice {
@@ -24,5 +26,6 @@ func SubtractSlice[T comparable](a, b []T) []T {
 func ReverseSlice[T comparable](slice []T) []T {
 	reversedSlice := make([]T, len(slice))
 	copy(reversedSlice, slice)
+	slices.Reverse(reversedSlice)
 	return reversedSlice
 }
