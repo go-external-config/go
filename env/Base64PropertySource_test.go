@@ -9,7 +9,7 @@ import (
 
 func Test_Base64PropertySourceTest(t *testing.T) {
 	t.Run("should decode property", func(t *testing.T) {
-		env.ActivateProfiles("test")
+		env.SetActiveProfiles("test")
 		env.GetEnvironment().AddPropertySource(env.MapPropertySourceOfMap("delegate", map[string]string{
 			"base64Encoded": "Base64:IEhlbGxvIFdvcmxkISA="}))
 		env.GetEnvironment().AddPropertySource(env.NewBase64PropertySource())

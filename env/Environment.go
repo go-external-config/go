@@ -25,7 +25,7 @@ type Environment struct {
 	exprProcessor         *ExprProcessor
 }
 
-func newEnvironment() *Environment {
+func newEnvironment(activeProfiles string) *Environment {
 	environment := Environment{
 		activeProfiles:  []string{"default"},
 		propertySources: make([]PropertySource, 0),
@@ -35,7 +35,7 @@ func newEnvironment() *Environment {
 	environment.exprProcessor.propertySource = &environment
 	environment.loadEnvironmentVariables()
 	environment.loadApplicationParameters()
-	environment.loadApplicationConfiguration("")
+	environment.loadApplicationConfiguration(activeProfiles)
 	return &environment
 }
 
@@ -79,7 +79,9 @@ func (e *Environment) Properties() map[string]string {
 //
 // If a profile begins with '!' the logic is inverted, meaning this method will return true if the given profile is not active.
 // For example, env.MatchesProfiles("p1", "!p2") will return true if profile 'p1' is active or 'p2' is not active.
-func (e *Environment) MatchesProfiles(profiles ...string) {}
+func (e *Environment) MatchesProfiles(profiles ...string) bool {
+	panic("Not implemented")
+}
 
 // last wins
 func (e *Environment) ActiveProfiles() []string {
@@ -120,24 +122,18 @@ func (e *Environment) loadApplicationParameters() {
 // last wins
 // application.yaml
 // application-<profile>.yaml
-func (e *Environment) loadApplicationConfiguration(additionalProfiles string) {
-	bootstrap := len(additionalProfiles) == 0
-	missingProfiles := collection.SubtractSlice(strings.Split(additionalProfiles, ","), e.activeProfiles)
-	if bootstrap {
-		var activeProfiles string = lang.FirstNonEmpty(e.paramsPropertySource.properties["profiles.active"], e.environPropertySource.properties["PROFILES_ACTIVE"])
-		e.activeProfiles = lang.If(len(activeProfiles) == 0, e.activeProfiles, append(e.activeProfiles, strings.Split(activeProfiles, ",")...))
-	} else {
-		e.activeProfiles = lang.If(len(missingProfiles) == 0, e.activeProfiles, append(e.activeProfiles, missingProfiles...))
-	}
+func (e *Environment) loadApplicationConfiguration(bootstrapProfiles string) {
+	var activeProfiles string = lang.FirstNonEmpty(e.paramsPropertySource.properties["profiles.active"], e.environPropertySource.properties["PROFILES_ACTIVE"], bootstrapProfiles)
+	e.activeProfiles = lang.If(len(activeProfiles) == 0, e.activeProfiles, append(e.activeProfiles, strings.Split(activeProfiles, ",")...))
 	configName := lang.FirstNonEmpty(e.paramsPropertySource.properties["config.name"], e.environPropertySource.properties["CONFIG_NAME"], "application")
 	configLocation := lang.FirstNonEmpty(e.paramsPropertySource.properties["config.location"], e.environPropertySource.properties["CONFIG_LOCATION"], "./")
 	configAdditionalLocation := lang.FirstNonEmpty(e.paramsPropertySource.properties["config.additional-location"], e.environPropertySource.properties["CONFIG_ADDITIONAL_LOCATION"])
 	configLocation = lang.If(len(configAdditionalLocation) == 0, configLocation, configLocation+";"+configAdditionalLocation)
 
 	for _, location := range strings.Split(configLocation, ",") {
-		for i := 0; i < len(lang.If(bootstrap, e.activeProfiles, missingProfiles)); i++ {
+		for i := 0; i < len(e.activeProfiles); i++ {
 			for _, locationGroup := range strings.Split(location, ";") {
-				e.loadConfiguration(locationGroup, configName, lang.If(bootstrap, e.activeProfiles, missingProfiles)[i])
+				e.loadConfiguration(locationGroup, configName, e.activeProfiles[i])
 			}
 		}
 	}
