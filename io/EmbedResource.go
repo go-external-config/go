@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/url"
 	"time"
+
+	"github.com/madamovych/go/util"
 )
 
 type EmbedResource struct {
@@ -46,4 +48,8 @@ func (r *EmbedResource) Size() int64 {
 
 func (r *EmbedResource) ModTime() time.Time {
 	panic("Not implemented")
+}
+
+func (r *EmbedResource) String() string {
+	return util.OptionalOfCommaErr(url.PathUnescape(r.url.String())).OrElsePanic("Cannot unescape %s", r.url)
 }

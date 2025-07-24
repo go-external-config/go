@@ -1,6 +1,7 @@
 package io
 
 import (
+	"fmt"
 	"net/url"
 
 	"github.com/madamovych/go/lang"
@@ -41,7 +42,7 @@ func (l *ResourceLoader) Resolve(location string) Resource {
 	case "embed":
 		return NewEmbedResource(url)
 	}
-	return nil
+	panic(fmt.Sprintf("Cannot resolve resource of schema '%s' in %s", schema, location))
 }
 
 func (l *ResourceLoader) AddProtocalResolver(protocolResolver ProtocolResolver) {

@@ -27,7 +27,8 @@ func (r *FileResource) URL() *url.URL {
 }
 
 func (r *FileResource) CreateRelative(location string) Resource {
-	relativeUrl := r.URL().JoinPath(location)
+	relativeLocation := util.OptionalOfCommaErr(url.PathUnescape(r.url.JoinPath(location).String())).OrElsePanic("Cannot create relative location %s + %s", r.url.Path, location)
+	relativeUrl := util.OptionalOfCommaErr(url.Parse(relativeLocation)).OrElsePanic("Cannot parse location %s", relativeLocation)
 	return NewFileResource(relativeUrl)
 }
 
@@ -49,4 +50,8 @@ func (r *FileResource) Size() int64 {
 
 func (r *FileResource) ModTime() time.Time {
 	panic("Not implemented")
+}
+
+func (r *FileResource) String() string {
+	return util.OptionalOfCommaErr(url.PathUnescape(r.url.String())).OrElsePanic("Cannot unescape %s", r.url)
 }

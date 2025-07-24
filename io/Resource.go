@@ -15,4 +15,5 @@ type Resource interface {
 	IsDir() bool
 	Size() int64
 	ModTime() time.Time
+	String() string
 }
