@@ -177,7 +177,7 @@ func (e *Environment) tryLoad(resource io.Resource, fantomExt string) {
 	case ".yaml", ".yml":
 		result = NewYamlPropertySource(resource.URL().Path, content)
 	default:
-		panic(fmt.Sprintf("Cannot load from %s as %s file types is not supported", resource.URL(), ext))
+		panic(fmt.Sprintf("Cannot load from %s as %s file types are not supported. Use fantom extension if applicable, like app.env[.properties]", resource.URL(), ext))
 	}
 	e.propertySources = append(e.propertySources, result)
 	if result.HasProperty("active.profiles") && len(e.activeProfiles) == 1 && e.activeProfiles[0] == "default" {
