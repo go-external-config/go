@@ -8,7 +8,7 @@ func SliceToSet[T comparable](slice []T) map[T]any {
 	return result
 }
 
-// a - b
+// new slice a - b
 func SubtractSlice[T comparable](a, b []T) []T {
 	set := SliceToSet(b)
 	var diff []T
@@ -18,4 +18,11 @@ func SubtractSlice[T comparable](a, b []T) []T {
 		}
 	}
 	return diff
+}
+
+// new reverced slice
+func ReverseSlice[T comparable](slice []T) []T {
+	reversedSlice := make([]T, len(slice))
+	copy(reversedSlice, slice)
+	return reversedSlice
 }

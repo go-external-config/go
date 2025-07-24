@@ -14,7 +14,6 @@ import (
 	"github.com/madamovych/go/util"
 	"github.com/madamovych/go/util/collection"
 	"github.com/madamovych/go/util/regex"
-	"github.com/madamovych/go/util/text"
 )
 
 type Environment struct {
@@ -23,7 +22,7 @@ type Environment struct {
 	environPropertySource *MapPropertySource
 	propertySources       []PropertySource
 	resourceLoader        *io.ResourceLoader
-	exprProcessor         *text.ExprProcessor
+	exprProcessor         *ExprProcessor
 }
 
 func newEnvironment() *Environment {
@@ -31,12 +30,26 @@ func newEnvironment() *Environment {
 		activeProfiles:  []string{"default"},
 		propertySources: make([]PropertySource, 0),
 		resourceLoader:  io.NewResourceLoader(),
-		exprProcessor:   text.ExprProcessorOf(true)}
+		exprProcessor:   ExprProcessorOf(true)}
 
+	environment.exprProcessor.propertySource = &environment
 	environment.loadEnvironmentVariables()
 	environment.loadApplicationParameters()
 	environment.loadApplicationConfiguration("")
 	return &environment
+}
+
+func (e *Environment) Name() string {
+	return "Environment composite PropertySource"
+}
+
+func (e *Environment) HasProperty(key string) bool {
+	for _, source := range e.propertySources {
+		if source.HasProperty(key) {
+			return true
+		}
+	}
+	return e.paramsPropertySource.HasProperty(key) || e.environPropertySource.HasProperty(key)
 }
 
 func (e *Environment) Property(key string) string {
@@ -50,12 +63,16 @@ func (e *Environment) Property(key string) string {
 				return e.ResolveRequiredPlaceholders(e.propertySources[i].Property(key))
 			}
 		}
-		panic("No value present for " + key)
 	}
+	panic("No value present for " + key)
 }
 
 func (e *Environment) ResolveRequiredPlaceholders(expression string) string {
 	return e.exprProcessor.Process(expression)
+}
+
+func (e *Environment) Properties() map[string]string {
+	return nil
 }
 
 // Determine whether one or more of the given profiles is active.
@@ -64,12 +81,14 @@ func (e *Environment) ResolveRequiredPlaceholders(expression string) string {
 // For example, env.MatchesProfiles("p1", "!p2") will return true if profile 'p1' is active or 'p2' is not active.
 func (e *Environment) MatchesProfiles(profiles ...string) {}
 
+// last wins
 func (e *Environment) ActiveProfiles() []string {
 	return e.activeProfiles
 }
 
+// first wins
 func (e *Environment) PropertySources() []PropertySource {
-	return e.propertySources
+	return collection.ReverseSlice(e.propertySources)
 }
 
 // ACTIVE_PROFILES=dev,hsqldb
@@ -79,10 +98,7 @@ func (e *Environment) loadEnvironmentVariables() {
 	for _, keyValue := range os.Environ() {
 		for _, m := range pattern.FindAllStringSubmatchIndex(keyValue, -1) {
 			match := regex.MatchOf(pattern, keyValue, m)
-			key := match.NamedGroup("key").Value()
-			value := match.NamedGroup("value").Value()
-			environ.SetProperty(key, value)
-			e.exprProcessor.Define(key, value)
+			environ.SetProperty(match.NamedGroup("key").Value(), match.NamedGroup("value").Value())
 		}
 	}
 	e.environPropertySource = environ
@@ -95,15 +111,13 @@ func (e *Environment) loadApplicationParameters() {
 	for _, keyValue := range os.Args[1:] {
 		for _, m := range pattern.FindAllStringSubmatchIndex(keyValue, -1) {
 			match := regex.MatchOf(pattern, keyValue, m)
-			key := match.NamedGroup("key").Value()
-			value := match.NamedGroup("value").Value()
-			params.SetProperty(key, value)
-			e.exprProcessor.Define(key, value)
+			params.SetProperty(match.NamedGroup("key").Value(), match.NamedGroup("value").Value())
 		}
 	}
 	e.paramsPropertySource = params
 }
 
+// last wins
 // application.yaml
 // application-<profile>.yaml
 func (e *Environment) loadApplicationConfiguration(additionalProfiles string) {
@@ -127,8 +141,6 @@ func (e *Environment) loadApplicationConfiguration(additionalProfiles string) {
 			}
 		}
 	}
-	e.loadEnvironmentVariables()
-	e.loadApplicationParameters()
 }
 
 func (e *Environment) loadConfiguration(location, name, profile string) {
@@ -172,14 +184,12 @@ func (e *Environment) tryLoad(resource io.Resource, fantomExt string) {
 		panic(fmt.Sprintf("Cannot load from %s as %s file types is not supported", resource.URL(), ext))
 	}
 	e.propertySources = append(e.propertySources, result)
-	for key, value := range result.Properties() {
-		if key == "active.profiles" {
-			if len(e.activeProfiles) == 1 && e.activeProfiles[0] == "default" {
-				e.activeProfiles = append(e.activeProfiles, strings.Split(value, ",")...)
-			} else {
-				continue
-			}
-		}
-		e.exprProcessor.Define(key, value)
+	if result.HasProperty("active.profiles") && len(e.activeProfiles) == 1 && e.activeProfiles[0] == "default" {
+		e.activeProfiles = append(e.activeProfiles, strings.Split(result.Property("active.profiles"), ",")...)
 	}
+}
+
+// custom property source as additional logic for properties processing, like property=Base64:dGVzdAo=, see Base64PropertySource as an example
+func (e *Environment) AddPropertySource(source PropertySource) {
+	e.propertySources = append(e.propertySources, source)
 }

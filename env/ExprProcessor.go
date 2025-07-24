@@ -1,4 +1,4 @@
-package text
+package env
 
 import (
 	"fmt"
@@ -10,17 +10,19 @@ import (
 	"github.com/madamovych/go/lang"
 	"github.com/madamovych/go/util"
 	"github.com/madamovych/go/util/regex"
+	"github.com/madamovych/go/util/text"
 )
 
 type ExprProcessor struct {
-	PatternProcessor
-	context map[string]any
-	strict  bool
+	text.PatternProcessor
+	propertySource PropertySource
+	context        map[string]any
+	strict         bool
 }
 
 func ExprProcessorOf(strict bool) *ExprProcessor {
 	processor := ExprProcessor{
-		PatternProcessor: *PatternProcessorOf(`\#\#\#\{(?P<complex>([^\$#]\{|[^\{])*?)\}\#\#\#|\#\{(?P<expr>([^\$#]\{|[^\{])*?)\}|\$\{(?P<prop>([^\$#:]\{|[^\{\}:])*)(:(?P<defaultValue>([^\$#]\{|[^\{])*?))?\}`),
+		PatternProcessor: *text.PatternProcessorOf(`\#\#\#\{(?P<complex>([^\$#]\{|[^\{])*?)\}\#\#\#|\#\{(?P<expr>([^\$#]\{|[^\{])*?)\}|\$\{(?P<prop>([^\$#:]\{|[^\{\}:])*)(:(?P<defaultValue>([^\$#]\{|[^\{])*?))?\}`),
 		context:          make(map[string]any),
 		strict:           strict}
 	processor.OverrideResolve(processor.Resolve)
@@ -38,21 +40,29 @@ func (p *ExprProcessor) Resolve(match *regex.Match,
 	}
 	prop := match.NamedGroup("prop")
 	if prop.Present() {
-		resolvedValue := util.OptionalOfEntry(p.context, prop.Value())
+		resolvedValue := p.ResolveProperty(prop.Value())
 		defaultValue := match.NamedGroup("defaultValue")
 		if resolvedValue.Present() {
 			resolved = fmt.Sprintf("%v", resolvedValue.Value())
 		} else if defaultValue.Present() {
 			resolved = defaultValue.Value()
 		} else {
-			panic(fmt.Sprintf("Cannot resolve %s", match.Expr()))
+			panic(fmt.Sprintf("Cannot resolve property %s", match.Expr()))
 		}
 	} else {
 		expression := lang.FirstNonEmpty(match.NamedGroup("expr").OrElse(""), match.NamedGroup("complex").OrElse(""))
-		resolved = fmt.Sprintf("%v", util.OptionalOfNilable(p.eval(expression, p.context)).OrElsePanic("Cannot resolve %s", match.Expr()))
+		resolved = fmt.Sprintf("%v", util.OptionalOfNilable(p.eval(expression, p.context)).OrElsePanic("Cannot evaluate expression %s", match.Expr()))
 	}
 	// slog.Debug(fmt.Sprintf("ExprProcessor: %s -> %s\n", match.Expr(), resolved))
 	return resolved
+}
+
+func (p *ExprProcessor) ResolveProperty(prop string) *util.Optional[string] {
+	if p.propertySource.HasProperty(prop) {
+		return util.OptionalOfValue(p.propertySource.Property(prop))
+	} else {
+		return util.OptionalOfEmpty[string]()
+	}
 }
 
 func (p *ExprProcessor) Define(key string, value any) {
@@ -74,4 +84,8 @@ func (p *ExprProcessor) eval(input string, env any) any {
 
 func (p *ExprProcessor) SetStrict(strict bool) {
 	p.strict = strict
+}
+
+func (p *ExprProcessor) SetPropertySource(source PropertySource) {
+	p.propertySource = source
 }

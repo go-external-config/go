@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_RegexpMatch(t *testing.T) {
+func Test_Match(t *testing.T) {
 	t.Run("should produce sane results'", func(t *testing.T) {
 		pattern := regexp.MustCompile(`\$\$\{(?P<long>.*?)\}\$|\$\{(?P<short>.*?)\}`)
 		str := `To be, or not to be: that is the ${question}:

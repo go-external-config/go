@@ -27,13 +27,14 @@ c:
         - sub1: "#{${a.key2} + ${ab.key1}}"
 `)
 		source.SetProperty("prop5", "#{3+2}")
-		source.ResolvePlaceholders()
+		processor := env.ExprProcessorOf(true)
+		processor.SetPropertySource(source)
 
-		require.Equal(t, "value1", source.Property("a.key1"))
-		require.Equal(t, "2.5", source.Property("a.key2"))
-		require.Equal(t, "5", source.Property("ab.key1"))
-		require.Equal(t, "h", source.Property("ab.key2"))
-		require.Equal(t, "5", source.Property("c.array[0].value"))
-		require.Equal(t, "7.5", source.Property("c.array[1].sub-array[0].sub1"))
+		require.Equal(t, "value1", processor.Process("${a.key1}"))
+		require.Equal(t, "2.5", processor.Process("${a.key2}"))
+		require.Equal(t, "5", processor.Process("${ab.key1}"))
+		require.Equal(t, "h", processor.Process("${ab.key2}"))
+		require.Equal(t, "5", processor.Process("${c.array[0].value}"))
+		require.Equal(t, "7.5", processor.Process("${c.array[1].sub-array[0].sub1}"))
 	})
 }
