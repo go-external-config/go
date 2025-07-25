@@ -1,7 +1,7 @@
 package env
 
 import (
-	"github.com/madamovych/go/lang"
+	"github.com/go-external-config/go/lang"
 )
 
 type MapPropertySource struct {

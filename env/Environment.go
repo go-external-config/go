@@ -9,11 +9,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/madamovych/go/io"
-	"github.com/madamovych/go/lang"
-	"github.com/madamovych/go/util"
-	"github.com/madamovych/go/util/collection"
-	"github.com/madamovych/go/util/regex"
+	"github.com/go-external-config/go/io"
+	"github.com/go-external-config/go/lang"
+	"github.com/go-external-config/go/util"
+	"github.com/go-external-config/go/util/collection"
+	"github.com/go-external-config/go/util/regex"
 )
 
 type Environment struct {

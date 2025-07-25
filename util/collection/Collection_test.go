@@ -3,7 +3,7 @@ package collection_test
 import (
 	"testing"
 
-	"github.com/madamovych/go/util/collection"
+	"github.com/go-external-config/go/util/collection"
 	"github.com/stretchr/testify/require"
 )
 

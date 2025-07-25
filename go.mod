@@ -1,4 +1,4 @@
-module github.com/madamovych/go
+module github.com/go-external-config/go
 
 go 1.24.4
 

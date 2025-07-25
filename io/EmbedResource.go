@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/madamovych/go/util"
+	"github.com/go-external-config/go/util"
 )
 
 type EmbedResource struct {

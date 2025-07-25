@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/madamovych/go/lang"
-	"github.com/madamovych/go/util/regex"
+	"github.com/go-external-config/go/lang"
+	"github.com/go-external-config/go/util/regex"
 )
 
 type PatternProcessor struct {

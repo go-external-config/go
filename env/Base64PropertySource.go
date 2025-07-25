@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"strings"
 
-	"github.com/madamovych/go/util"
+	"github.com/go-external-config/go/util"
 )
 
 // custom property source as additional logic for properties processing, like property=Base64:dGVzdAo=

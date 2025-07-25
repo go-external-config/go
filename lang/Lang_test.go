@@ -3,7 +3,7 @@ package lang_test
 import (
 	"testing"
 
-	"github.com/madamovych/go/lang"
+	"github.com/go-external-config/go/lang"
 	"github.com/stretchr/testify/require"
 )
 

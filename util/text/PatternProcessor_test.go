@@ -3,8 +3,8 @@ package text_test
 import (
 	"testing"
 
-	"github.com/madamovych/go/util/regex"
-	"github.com/madamovych/go/util/text"
+	"github.com/go-external-config/go/util/regex"
+	"github.com/go-external-config/go/util/text"
 	"github.com/stretchr/testify/require"
 )
 

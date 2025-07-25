@@ -3,7 +3,7 @@ package regex
 import (
 	"regexp"
 
-	"github.com/madamovych/go/util"
+	"github.com/go-external-config/go/util"
 )
 
 type Match struct {
