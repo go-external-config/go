@@ -32,47 +32,35 @@ func newEnvironment(activeProfiles string) *Environment {
 		resourceLoader:  io.NewResourceLoader(),
 		exprProcessor:   ExprProcessorOf(true)}
 
-	environment.exprProcessor.propertySource = &environment
 	environment.loadEnvironmentVariables()
 	environment.loadApplicationParameters()
 	environment.loadApplicationConfiguration(activeProfiles)
+	environment.AddPropertySource(NewBase64PropertySource(&environment))
 	return &environment
 }
 
-func (e *Environment) Name() string {
-	return "Environment composite PropertySource"
+func (e *Environment) Property(key string) any {
+	return e.ResolveRequiredPlaceholders(e.lookupRawProperty(key).
+		OrElsePanic("No value present for %s", key))
 }
 
-func (e *Environment) HasProperty(key string) bool {
-	for _, source := range e.propertySources {
-		if source.HasProperty(key) {
-			return true
-		}
-	}
-	return e.paramsPropertySource.HasProperty(key) || e.environPropertySource.HasProperty(key)
-}
-
-func (e *Environment) Property(key string) string {
+func (e *Environment) lookupRawProperty(key string) *util.Optional[string] {
 	if e.paramsPropertySource.HasProperty(key) {
-		return e.ResolveRequiredPlaceholders(e.paramsPropertySource.Property(key))
+		return util.OptionalOfValue(e.paramsPropertySource.Property(key))
 	} else if e.environPropertySource.HasProperty(key) {
-		return e.ResolveRequiredPlaceholders(e.environPropertySource.Property(key))
+		return util.OptionalOfValue(e.environPropertySource.Property(key))
 	} else {
 		for i := len(e.propertySources) - 1; i >= 0; i-- {
 			if e.propertySources[i].HasProperty(key) {
-				return e.ResolveRequiredPlaceholders(e.propertySources[i].Property(key))
+				return util.OptionalOfValue(e.propertySources[i].Property(key))
 			}
 		}
 	}
-	panic("No value present for " + key)
+	return util.OptionalOfEmpty[string]()
 }
 
-func (e *Environment) ResolveRequiredPlaceholders(expression string) string {
+func (e *Environment) ResolveRequiredPlaceholders(expression string) any {
 	return e.exprProcessor.Process(expression)
-}
-
-func (e *Environment) Properties() map[string]string {
-	return nil
 }
 
 // Determine whether one or more of the given profiles is active.
@@ -185,7 +173,9 @@ func (e *Environment) tryLoad(resource io.Resource, fantomExt string) {
 	}
 }
 
-// custom property source as additional logic for properties processing, like property=Base64:dGVzdAo=, see Base64PropertySource as an example
+// custom property source as additional logic for properties processing, like property=base64:dGVzdAo=, see Base64PropertySource as an example
+//
+//	env.EnvironmentInstance().AddPropertySource(env.NewBase64PropertySource(env.EnvironmentInstance()))
 func (e *Environment) AddPropertySource(source PropertySource) {
 	e.propertySources = append(e.propertySources, source)
 }

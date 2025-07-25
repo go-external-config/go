@@ -7,14 +7,14 @@ import (
 	"github.com/go-external-config/go/util"
 )
 
-// custom property source as additional logic for properties processing, like property=Base64:dGVzdAo=
+// custom property source as additional logic for properties processing, like property=base64:dGVzdAo=
 type Base64PropertySource struct {
-	environment PropertySource
+	environment *Environment
 }
 
-func NewBase64PropertySource() *Base64PropertySource {
+func NewBase64PropertySource(environment *Environment) *Base64PropertySource {
 	return &Base64PropertySource{
-		environment: GetEnvironment()}
+		environment: environment}
 }
 
 func (s *Base64PropertySource) Name() string {
@@ -24,7 +24,7 @@ func (s *Base64PropertySource) Name() string {
 func (s *Base64PropertySource) HasProperty(key string) bool {
 	for _, source := range environment.PropertySources() {
 		if source.Properties() != nil && source.HasProperty(key) {
-			return strings.HasPrefix(source.Property(key), "Base64:")
+			return strings.HasPrefix(source.Property(key), "base64:")
 		}
 	}
 	return false

@@ -16,13 +16,13 @@ func Test_PropertiesPropertySource_Resolve(t *testing.T) {
 		prop4=${prop#{${prop5}-2}}
 `)
 		source.SetProperty("prop5", "#{2+2}")
-		processor := env.ExprProcessorOf(true)
-		processor.SetPropertySource(source)
+		environment := env.EnvironmentInstance()
+		environment.AddPropertySource(source)
 
-		require.Equal(t, "val1", processor.Process("${prop1}"))
-		require.Equal(t, "val1", processor.Process("${prop2}"))
-		require.Equal(t, "val1", processor.Process("${prop3}"))
-		require.Equal(t, "val1", processor.Process("${prop4}"))
-		require.Equal(t, "4", processor.Process("${prop5}"))
+		require.Equal(t, "val1", environment.Property("prop1"))
+		require.Equal(t, "val1", environment.Property("prop2"))
+		require.Equal(t, "val1", environment.Property("prop3"))
+		require.Equal(t, "val1", environment.Property("prop4"))
+		require.Equal(t, 4, environment.Property("prop5"))
 	})
 }

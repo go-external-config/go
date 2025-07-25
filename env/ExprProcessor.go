@@ -15,9 +15,8 @@ import (
 
 type ExprProcessor struct {
 	text.PatternProcessor
-	propertySource PropertySource
-	context        map[string]any
-	strict         bool
+	context map[string]any
+	strict  bool
 }
 
 func ExprProcessorOf(strict bool) *ExprProcessor {
@@ -30,7 +29,7 @@ func ExprProcessorOf(strict bool) *ExprProcessor {
 }
 
 func (p *ExprProcessor) Resolve(match *regex.Match,
-	super func(*regex.Match) string) (resolved string) {
+	super func(*regex.Match) any) (resolved any) {
 	if !p.strict {
 		defer func() {
 			if recover() != nil {
@@ -40,7 +39,7 @@ func (p *ExprProcessor) Resolve(match *regex.Match,
 	}
 	prop := match.NamedGroup("prop")
 	if prop.Present() {
-		resolvedValue := p.ResolveProperty(prop.Value())
+		resolvedValue := EnvironmentInstance().lookupRawProperty(prop.Value())
 		defaultValue := match.NamedGroup("defaultValue")
 		if resolvedValue.Present() {
 			resolved = fmt.Sprintf("%v", resolvedValue.Value())
@@ -51,18 +50,10 @@ func (p *ExprProcessor) Resolve(match *regex.Match,
 		}
 	} else {
 		expression := lang.FirstNonEmpty(match.NamedGroup("expr").OrElse(""), match.NamedGroup("complex").OrElse(""))
-		resolved = fmt.Sprintf("%v", util.OptionalOfNilable(p.eval(expression, p.context)).OrElsePanic("Cannot evaluate expression %s", match.Expr()))
+		resolved = util.OptionalOfNilable(p.eval(expression, p.context)).OrElsePanic("Cannot evaluate expression %s", match.Expr())
 	}
 	// slog.Debug(fmt.Sprintf("ExprProcessor: %s -> %s\n", match.Expr(), resolved))
 	return resolved
-}
-
-func (p *ExprProcessor) ResolveProperty(prop string) *util.Optional[string] {
-	if p.propertySource.HasProperty(prop) {
-		return util.OptionalOfValue(p.propertySource.Property(prop))
-	} else {
-		return util.OptionalOfEmpty[string]()
-	}
 }
 
 func (p *ExprProcessor) Define(key string, value any) {
@@ -84,8 +75,4 @@ func (p *ExprProcessor) eval(input string, env any) any {
 
 func (p *ExprProcessor) SetStrict(strict bool) {
 	p.strict = strict
-}
-
-func (p *ExprProcessor) SetPropertySource(source PropertySource) {
-	p.propertySource = source
 }

@@ -27,14 +27,15 @@ c:
         - sub1: "#{${a.key2} + ${ab.key1}}"
 `)
 		source.SetProperty("prop5", "#{3+2}")
-		processor := env.ExprProcessorOf(true)
-		processor.SetPropertySource(source)
+		env.SetActiveProfiles("")
+		environment := env.EnvironmentInstance()
+		environment.AddPropertySource(source)
 
-		require.Equal(t, "value1", processor.Process("${a.key1}"))
-		require.Equal(t, "2.5", processor.Process("${a.key2}"))
-		require.Equal(t, "5", processor.Process("${ab.key1}"))
-		require.Equal(t, "h", processor.Process("${ab.key2}"))
-		require.Equal(t, "5", processor.Process("${c.array[0].value}"))
-		require.Equal(t, "7.5", processor.Process("${c.array[1].sub-array[0].sub1}"))
+		require.Equal(t, "value1", environment.Property("a.key1"))
+		require.Equal(t, "2.5", environment.Property("a.key2"))
+		require.Equal(t, "5", environment.Property("ab.key1"))
+		require.Equal(t, "h", environment.Property("ab.key2"))
+		require.Equal(t, 5, environment.Property("c.array[0].value"))
+		require.Equal(t, 7.5, environment.Property("c.array[1].sub-array[0].sub1"))
 	})
 }
