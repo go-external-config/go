@@ -175,7 +175,7 @@ func (e *Environment) tryLoad(resource io.Resource, fantomExt string) {
 
 // custom property source as additional logic for properties processing, like property=base64:dGVzdAo=, see Base64PropertySource as an example
 //
-//	env.EnvironmentInstance().AddPropertySource(env.NewBase64PropertySource(env.EnvironmentInstance()))
+//	env.Instance().AddPropertySource(env.NewBase64PropertySource(env.Instance()))
 func (e *Environment) AddPropertySource(source PropertySource) {
 	e.propertySources = append(e.propertySources, source)
 }

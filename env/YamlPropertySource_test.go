@@ -28,7 +28,7 @@ c:
 `)
 		source.SetProperty("prop5", "#{3+2}")
 		env.SetActiveProfiles("")
-		environment := env.EnvironmentInstance()
+		environment := env.Instance()
 		environment.AddPropertySource(source)
 
 		require.Equal(t, "value1", environment.Property("a.key1"))

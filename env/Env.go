@@ -4,32 +4,66 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"unsafe"
+
+	"github.com/go-external-config/go/lang"
+	"github.com/go-external-config/go/util/str"
 )
 
 var environment *Environment
 
-// ${component.db.host}
-// #{'${component.db.user}:${component.db.pass}'}
+// Expression to evaluate against environment properties
+//
+//	require.Equal(t, "value", env.Value("${key}"))
+//	require.Equal(t, []string{"host1", "host2", "host3"}, env.Value("#{split('${servers}', ',')}"))
 func Value(expression string) any {
-	return EnvironmentInstance().ResolveRequiredPlaceholders(expression)
+	return Instance().ResolveRequiredPlaceholders(expression)
 }
 
-func ConfigurationProperties[T any](prefix string, target T) T {
-	// var zero T
-	t := reflect.TypeOf(target)
-	for i := 0; i < t.NumField(); i++ {
-		f := t.Field(i)
-		value := Value(fmt.Sprintf("${%s.%s}", prefix, f.Name))
-		fmt.Printf("%s[%s] = %s\n", f.Name, f.Type, value)
-		v := reflect.ValueOf(&target).Elem()
-		v.FieldByName(f.Name).Set(reflect.ValueOf(value))
+func ValueAs[T any](expression string) T {
+	return convertAs[T](Value(expression))
+}
+
+// Lookup property value, evaluate any expressions if any.
+// Properties are strings unless value is an expression which evaluates to any type
+//
+//	require.Equal(t, "value", env.Property("key"))
+//	require.Equal(t, "value", env.Value("${key}"))
+//	require.Equal(t, []string{"host1", "host2", "host3"}, env.Value("#{split('${servers}', ',')}"))
+func Property(prop string) any {
+	return Instance().Property(prop)
+}
+
+func PropertyAs[T any](expression string) T {
+	return convertAs[T](Property(expression))
+}
+
+func ConfigurationProperties[T any](prefix string, target *T) *T {
+	targetType := reflect.TypeOf(*target)
+	targetValue := reflect.ValueOf(target).Elem()
+	for i := 0; i < targetType.NumField(); i++ {
+		reflectField := targetType.Field(i)
+		rawValue := Instance().lookupRawProperty(fmt.Sprintf("%s.%s", prefix, reflectField.Name))
+		if !rawValue.Present() {
+			continue
+		}
+		value := Instance().ResolveRequiredPlaceholders(rawValue.Value())
+		targetFieldValue := targetValue.FieldByName(reflectField.Name)
+		converted := convertAsType(value, targetFieldValue.Type())
+		if targetFieldValue.CanSet() {
+			targetFieldValue.Set(reflect.ValueOf(converted))
+		} else {
+			ptr := unsafe.Pointer(targetFieldValue.UnsafeAddr())
+			settableField := reflect.NewAt(targetFieldValue.Type(), ptr).Elem()
+			settableField.Set(reflect.ValueOf(converted))
+		}
 	}
 	return target
 }
 
 // last wins
 func ActiveProfiles() []string {
-	return EnvironmentInstance().activeProfiles
+	return Instance().activeProfiles
 }
 
 // Bootstrap new environment with profiles listed, last wins.
@@ -53,9 +87,30 @@ func SetActiveProfiles(profiles string) {
 	}
 }
 
-func EnvironmentInstance() *Environment {
+func Instance() *Environment {
 	if environment == nil {
 		environment = newEnvironment("")
 	}
 	return environment
+}
+
+func convertAs[T any](value any) T {
+	var zero T
+	return convertAsType(value, reflect.TypeOf(zero)).(T)
+}
+
+func convertAsType(value any, t reflect.Type) any {
+	switch t.Kind() {
+	case reflect.String:
+		return fmt.Sprintf("%v", value)
+	default:
+		switch v := value.(type) {
+		case string:
+			return str.ParseOfType(v, t)
+		default:
+			val := reflect.ValueOf(value)
+			lang.AssertState(val.Type().ConvertibleTo(t), "Cannot convert %s %v to %v", val.Type().Name(), value, t.Name())
+			return val.Convert(t).Interface()
+		}
+	}
 }

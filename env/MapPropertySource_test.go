@@ -16,7 +16,7 @@ func Test_MapPropertySource_Resolve(t *testing.T) {
 			"prop4": "${prop#{${prop5}-2}}"})
 		source.SetProperty("prop5", "#{2+2}")
 		env.SetActiveProfiles("")
-		environment := env.EnvironmentInstance()
+		environment := env.Instance()
 		environment.AddPropertySource(source)
 
 		require.Equal(t, "val1", environment.Property("prop1"))

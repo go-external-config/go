@@ -11,7 +11,7 @@ func Test_ExprProcessor_Process_DummyVariable(t *testing.T) {
 	t.Run("should substitute variable", func(t *testing.T) {
 		env.SetActiveProfiles("")
 		propertySource := env.MapPropertySourceOf("map")
-		env.EnvironmentInstance().AddPropertySource(propertySource)
+		env.Instance().AddPropertySource(propertySource)
 
 		processor := env.ExprProcessorOf(false)
 		require.Equal(t, " Hello ${name}! ", processor.Process(" Hello ${name}! "))
@@ -43,7 +43,7 @@ func Test_ExprProcessor_Process_ComplexVariable(t *testing.T) {
 	t.Run("should substitute variable", func(t *testing.T) {
 		env.SetActiveProfiles("")
 		propertySource := env.MapPropertySourceOf("map")
-		env.EnvironmentInstance().AddPropertySource(propertySource)
+		env.Instance().AddPropertySource(propertySource)
 		propertySource.SetProperty("property", "name")
 
 		processor := env.ExprProcessorOf(false)
@@ -66,7 +66,7 @@ func Test_ExprProcessor_Process_ComplexExpression(t *testing.T) {
 	t.Run("should substitute variable", func(t *testing.T) {
 		env.SetActiveProfiles("")
 		propertySource := env.MapPropertySourceOf("map")
-		env.EnvironmentInstance().AddPropertySource(propertySource)
+		env.Instance().AddPropertySource(propertySource)
 		processor := env.ExprProcessorOf(false)
 		propertySource.SetProperty("age", "30")
 		require.Equal(t, "John is of age 30", processor.Process(`###{
