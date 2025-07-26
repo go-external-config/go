@@ -24,6 +24,8 @@ func Test_Parse(t *testing.T) {
 		require.Equal(t, float32(123), str.Parse[float32](value))
 		require.Equal(t, float64(123), str.Parse[float64](value))
 		require.Equal(t, "123", str.Parse[string](value))
+		type Port int8
+		require.Equal(t, Port(123), str.Parse[Port](value))
 		require.Equal(t, true, str.Parse[bool]("true"))
 	})
 }

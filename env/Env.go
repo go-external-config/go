@@ -51,11 +51,11 @@ func ConfigurationProperties[T any](prefix string, target *T) *T {
 		targetFieldValue := targetValue.FieldByName(reflectField.Name)
 		converted := convertAsType(value, targetFieldValue.Type())
 		if targetFieldValue.CanSet() {
-			targetFieldValue.Set(reflect.ValueOf(converted).Convert(targetFieldValue.Type()))
+			targetFieldValue.Set(reflect.ValueOf(converted))
 		} else {
 			ptr := unsafe.Pointer(targetFieldValue.UnsafeAddr())
 			settableField := reflect.NewAt(targetFieldValue.Type(), ptr).Elem()
-			settableField.Set(reflect.ValueOf(converted).Convert(targetFieldValue.Type()))
+			settableField.Set(reflect.ValueOf(converted))
 		}
 	}
 	return target

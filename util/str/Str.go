@@ -20,57 +20,57 @@ func ParseOfType(value string, t reflect.Type) any {
 	case reflect.Int:
 		v, err := strconv.Atoi(value)
 		lang.AssertState(err == nil, errMsg, value, t, err)
-		return v
+		return reflect.ValueOf(v).Convert(t).Interface()
 	case reflect.Int8:
 		v, err := strconv.ParseInt(value, 10, 8)
 		lang.AssertState(err == nil, errMsg, value, t, err)
-		return int8(v)
+		return reflect.ValueOf(int8(v)).Convert(t).Interface()
 	case reflect.Int16:
 		v, err := strconv.ParseInt(value, 10, 16)
 		lang.AssertState(err == nil, errMsg, value, t, err)
-		return int16(v)
+		return reflect.ValueOf(int16(v)).Convert(t).Interface()
 	case reflect.Int32:
 		v, err := strconv.ParseInt(value, 10, 32)
 		lang.AssertState(err == nil, errMsg, value, t, err)
-		return int32(v)
+		return reflect.ValueOf(int32(v)).Convert(t).Interface()
 	case reflect.Int64:
 		v, err := strconv.ParseInt(value, 10, 64)
 		lang.AssertState(err == nil, errMsg, value, t, err)
-		return v
+		return reflect.ValueOf(v).Convert(t).Interface()
 	case reflect.Uint:
 		v, err := strconv.ParseUint(value, 10, 0)
 		lang.AssertState(err == nil, errMsg, value, t, err)
-		return uint(v)
+		return reflect.ValueOf(uint(v)).Convert(t).Interface()
 	case reflect.Uint8:
 		v, err := strconv.ParseUint(value, 10, 8)
 		lang.AssertState(err == nil, errMsg, value, t, err)
-		return uint8(v)
+		return reflect.ValueOf(uint8(v)).Convert(t).Interface()
 	case reflect.Uint16:
 		v, err := strconv.ParseUint(value, 10, 16)
 		lang.AssertState(err == nil, errMsg, value, t, err)
-		return uint16(v)
+		return reflect.ValueOf(uint16(v)).Convert(t).Interface()
 	case reflect.Uint32:
 		v, err := strconv.ParseUint(value, 10, 32)
 		lang.AssertState(err == nil, errMsg, value, t, err)
-		return uint32(v)
+		return reflect.ValueOf(uint32(v)).Convert(t).Interface()
 	case reflect.Uint64:
 		v, err := strconv.ParseUint(value, 10, 64)
 		lang.AssertState(err == nil, errMsg, value, t, err)
-		return v
+		return reflect.ValueOf(v).Convert(t).Interface()
 	case reflect.Float32:
 		v, err := strconv.ParseFloat(value, 32)
 		lang.AssertState(err == nil, errMsg, value, t, err)
-		return float32(v)
+		return reflect.ValueOf(float32(v)).Convert(t).Interface()
 	case reflect.Float64:
 		v, err := strconv.ParseFloat(value, 64)
 		lang.AssertState(err == nil, errMsg, value, t, err)
-		return v
+		return reflect.ValueOf(v).Convert(t).Interface()
 	case reflect.Bool:
 		v, err := strconv.ParseBool(value)
 		lang.AssertState(err == nil, errMsg, value, t, err)
-		return v
+		return reflect.ValueOf(v).Convert(t).Interface()
 	case reflect.String:
-		return value
+		return reflect.ValueOf(value).Convert(t).Interface()
 	default:
 		panic(fmt.Sprintf("Unsupported type: %s", t))
 	}
