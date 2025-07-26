@@ -51,6 +51,9 @@ func Test_Env_PropertyVsValue(t *testing.T) {
 		require.Equal(t, []string{"prod", "live"}, env.Property("slice"))
 		require.Equal(t, []string{"prod", "live"}, env.Value("${slice}"))
 		require.Equal(t, "[prod live]", env.PropertyAs[string]("slice"))
+
+		type Port int
+		require.Equal(t, Port(123), env.PropertyAs[Port]("intExpr"))
 	})
 }
 
@@ -61,18 +64,22 @@ func Test_Env_ConfigurationProperties(t *testing.T) {
 			"key":      "value",
 			"db.alias": "alias",
 			"db.Host":  "localhost",
-			"db.port":  "123"}))
+			"db.port1": "111",
+			"db.port3": "333"}))
 
+		type Port int
 		var db struct {
 			Host  string
-			port  int
+			port1 int
 			port2 int
+			port3 Port
 		}
 
 		env.ConfigurationProperties("db", &db)
 
 		require.Equal(t, "localhost", db.Host)
-		require.Equal(t, 123, db.port)
+		require.Equal(t, 111, db.port1)
 		require.Equal(t, 0, db.port2)
+		require.Equal(t, Port(333), db.port3)
 	})
 }
