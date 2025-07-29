@@ -14,28 +14,10 @@ var environment *Environment
 
 // Expression to evaluate against environment properties
 //
-//	require.Equal(t, "value", env.Value("${key}"))
-//	require.Equal(t, []string{"host1", "host2", "host3"}, env.Value("#{split('${servers}', ',')}"))
-func Value(expression string) any {
-	return Instance().ResolveRequiredPlaceholders(expression)
-}
-
-func ValueAs[T any](expression string) T {
-	return convertAs[T](Value(expression))
-}
-
-// Lookup property value, evaluate any expressions if any.
-// Properties are strings unless value is an expression which evaluates to any type
-//
-//	require.Equal(t, "value", env.Property("key"))
-//	require.Equal(t, "value", env.Value("${key}"))
-//	require.Equal(t, []string{"host1", "host2", "host3"}, env.Value("#{split('${servers}', ',')}"))
-func Property(prop string) any {
-	return Instance().Property(prop)
-}
-
-func PropertyAs[T any](expression string) T {
-	return convertAs[T](Property(expression))
+//	require.Equal(t, "value", env.Value[string]("${key:default}"))
+//	require.Equal(t, []string{"host1", "host2", "host3"}, env.Value[[]string]("#{split('${servers}', ',')}"))
+func Value[T any](expression string) T {
+	return convertAs[T](Instance().ResolveRequiredPlaceholders(expression))
 }
 
 func ConfigurationProperties[T any](prefix string, target *T) *T {
@@ -102,7 +84,12 @@ func convertAs[T any](value any) T {
 func convertAsType(value any, t reflect.Type) any {
 	switch t.Kind() {
 	case reflect.String:
-		return fmt.Sprintf("%v", value)
+		switch v := value.(type) {
+		case string:
+			return v
+		default:
+			return fmt.Sprintf("%v", v)
+		}
 	default:
 		switch v := value.(type) {
 		case string:

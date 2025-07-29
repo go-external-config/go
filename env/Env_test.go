@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_Env_PropertyVsValue(t *testing.T) {
+func Test_Env_Value(t *testing.T) {
 	t.Run("should decode property", func(t *testing.T) {
 		env.SetActiveProfiles("")
 		env.Instance().AddPropertySource(env.MapPropertySourceOfMap("first loaded", map[string]string{
@@ -22,38 +22,22 @@ func Test_Env_PropertyVsValue(t *testing.T) {
 			"slice":   "#{split('prod,live', ',')}"}))
 
 		// last wins
-		require.Equal(t, "value3", env.Property("key"))
-		require.Equal(t, "value3", env.Value("${key}"))
+		require.Equal(t, "value3", env.Value[string]("${key}"))
 
-		// property values are strings (despite yaml allow other types) unless property value is an expression
-		require.Equal(t, "123", env.Property("int"))
-		require.Equal(t, "123", env.Value("${int}"))
-
-		// string values can be converted to compatible types
-		require.Equal(t, 123, env.PropertyAs[int]("int"))
-		require.Equal(t, 123, env.ValueAs[int]("${int}"))
-		require.Equal(t, float32(123.0), env.PropertyAs[float32]("int"))
-		require.Equal(t, 123.0, env.PropertyAs[float64]("int"))
-
-		// expression evaluation can produce any types
-		require.Equal(t, 123, env.Property("intExpr"))
-		require.Equal(t, 123, env.Value("${intExpr}"))
-
-		// any types (resulted from expression evaluation) can be converted to compatible types
-		require.Equal(t, 123, env.PropertyAs[int]("intExpr"))
-		require.Equal(t, float32(123.0), env.PropertyAs[float32]("intExpr"))
-		require.Equal(t, "123", env.PropertyAs[string]("intExpr"))
-
-		require.Equal(t, "host1,host2,host3", env.Property("servers"))
-		require.Equal(t, "host1,host2,host3", env.Value("${servers}"))
-		require.Equal(t, []string{"host1", "host2", "host3"}, env.Value("#{split('${servers}', ',')}"))
-
-		require.Equal(t, []string{"prod", "live"}, env.Property("slice"))
-		require.Equal(t, []string{"prod", "live"}, env.Value("${slice}"))
-		require.Equal(t, "[prod live]", env.PropertyAs[string]("slice"))
-
+		// coversions
+		require.Equal(t, "123", env.Value[string]("${int}"))
+		require.Equal(t, 123, env.Value[int]("${int}"))
+		require.Equal(t, float32(123.0), env.Value[float32]("${int}"))
+		require.Equal(t, 123.0, env.Value[float64]("${int}"))
+		require.Equal(t, "123", env.Value[string]("${intExpr}"))
+		require.Equal(t, 123, env.Value[int]("${intExpr}"))
+		require.Equal(t, float32(123.0), env.Value[float32]("${intExpr}"))
+		require.Equal(t, "host1,host2,host3", env.Value[string]("${servers}"))
+		require.Equal(t, []string{"host1", "host2", "host3"}, env.Value[[]string]("#{split('${servers}', ',')}"))
+		require.Equal(t, []string{"prod", "live"}, env.Value[[]string]("${slice}"))
+		require.Equal(t, "[prod live]", env.Value[string]("${slice}"))
 		type Port int
-		require.Equal(t, Port(123), env.PropertyAs[Port]("intExpr"))
+		require.Equal(t, Port(123), env.Value[Port]("${intExpr}"))
 	})
 }
 
