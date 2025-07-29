@@ -47,13 +47,14 @@ func Test_Env_ConfigurationProperties(t *testing.T) {
 		env.Instance().AddPropertySource(env.MapPropertySourceOfMap("properties", map[string]string{
 			"key":      "value",
 			"db.alias": "alias",
-			"db.Host":  "localhost",
+			"db.host":  "localhost",
 			"db.port1": "111",
 			"db.port3": "333"}))
 
 		type Port int
 		var db struct {
 			Host  string
+			host  string
 			port1 int
 			port2 int
 			port3 Port
@@ -62,6 +63,7 @@ func Test_Env_ConfigurationProperties(t *testing.T) {
 		env.ConfigurationProperties("db", &db)
 
 		require.Equal(t, "localhost", db.Host)
+		require.Equal(t, "localhost", db.host)
 		require.Equal(t, 111, db.port1)
 		require.Equal(t, 0, db.port2)
 		require.Equal(t, Port(333), db.port3)

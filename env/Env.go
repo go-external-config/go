@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"unicode"
 	"unsafe"
 
 	"github.com/go-external-config/go/lang"
@@ -26,6 +27,10 @@ func ConfigurationProperties[T any](prefix string, target *T) *T {
 	for i := 0; i < targetType.NumField(); i++ {
 		reflectField := targetType.Field(i)
 		rawValue := Instance().lookupRawProperty(fmt.Sprintf("%s.%s", prefix, reflectField.Name))
+		if !rawValue.Present() && unicode.IsUpper(rune(reflectField.Name[0])) {
+			decapitalizedName := strings.ToLower(reflectField.Name[:1]) + reflectField.Name[1:]
+			rawValue = Instance().lookupRawProperty(fmt.Sprintf("%s.%s", prefix, decapitalizedName))
+		}
 		if !rawValue.Present() {
 			continue
 		}
