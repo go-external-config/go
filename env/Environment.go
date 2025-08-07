@@ -155,7 +155,7 @@ func (e *Environment) tryLoad(resource io.Resource, fantomExt string) {
 		return
 	}
 	var result PropertySource
-	slog.Info(fmt.Sprintf("Loading properties from %s", resource.String()))
+	slog.Info(fmt.Sprintf("%T: loading properties from %s", *e, resource.String()))
 	ext := lang.FirstNonEmpty(fantomExt, filepath.Ext(resource.URL().Path))
 	lang.AssertState(len(ext) != 0, "Cannot load from location %s. Either use '/' at the end if location supposed to be a directory or provide fantom extension like [.yaml] to derive property source type", resource.URL())
 	content := string(util.OptionalOfCommaErr(goio.ReadAll(resource.Reader())).OrElsePanic("Cannot read from %s", resource.URL().Path))

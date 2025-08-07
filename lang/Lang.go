@@ -20,6 +20,10 @@ func IsNil(value any) bool {
 	return reflect.ValueOf(value).IsNil()
 }
 
+func TypeOf[T any]() reflect.Type {
+	return reflect.TypeOf((*T)(nil)).Elem()
+}
+
 func FirstNonEmpty[T comparable](values ...T) T {
 	empty := *new(T)
 	for _, value := range values {
