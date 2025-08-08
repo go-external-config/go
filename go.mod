@@ -1,4 +1,4 @@
-module github.com/go-external-config/go
+module github.com/go-external-config/v1
 
 go 1.24.4
 
