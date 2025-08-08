@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/go-external-config/go/lang"
-	"github.com/go-external-config/go/util"
+	"github.com/go-external-config/v1/lang"
+	"github.com/go-external-config/v1/util"
 )
 
 type ProtocolResolver interface {

@@ -3,7 +3,7 @@ package util
 import (
 	"fmt"
 
-	"github.com/go-external-config/go/lang"
+	"github.com/go-external-config/v1/lang"
 )
 
 type Optional[T any] struct {

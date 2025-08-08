@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/go-external-config/go/util/regex"
+	"github.com/go-external-config/v1/util/regex"
 	"github.com/stretchr/testify/require"
 )
 

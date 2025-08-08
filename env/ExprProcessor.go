@@ -7,10 +7,10 @@ import (
 	"github.com/expr-lang/expr/compiler"
 	"github.com/expr-lang/expr/conf"
 	"github.com/expr-lang/expr/parser"
-	"github.com/go-external-config/go/lang"
-	"github.com/go-external-config/go/util"
-	"github.com/go-external-config/go/util/regex"
-	"github.com/go-external-config/go/util/text"
+	"github.com/go-external-config/v1/lang"
+	"github.com/go-external-config/v1/util"
+	"github.com/go-external-config/v1/util/regex"
+	"github.com/go-external-config/v1/util/text"
 )
 
 type ExprProcessor struct {

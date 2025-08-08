@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-external-config/go/util"
+	"github.com/go-external-config/v1/util"
 )
 
 type FileResource struct {

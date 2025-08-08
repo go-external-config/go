@@ -3,7 +3,7 @@ package str_test
 import (
 	"testing"
 
-	"github.com/go-external-config/go/util/str"
+	"github.com/go-external-config/v1/util/str"
 	"github.com/stretchr/testify/require"
 )
 

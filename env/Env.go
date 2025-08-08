@@ -7,8 +7,8 @@ import (
 	"unicode"
 	"unsafe"
 
-	"github.com/go-external-config/go/lang"
-	"github.com/go-external-config/go/util/str"
+	"github.com/go-external-config/v1/lang"
+	"github.com/go-external-config/v1/util/str"
 )
 
 var environment *Environment

@@ -3,7 +3,7 @@ package util_test
 import (
 	"testing"
 
-	"github.com/go-external-config/go/util"
+	"github.com/go-external-config/v1/util"
 	"github.com/stretchr/testify/require"
 )
 

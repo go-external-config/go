@@ -3,7 +3,7 @@ package env_test
 import (
 	"testing"
 
-	"github.com/go-external-config/go/env"
+	"github.com/go-external-config/v1/env"
 	"github.com/stretchr/testify/require"
 )
 
