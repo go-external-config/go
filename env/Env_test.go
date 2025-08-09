@@ -24,7 +24,7 @@ func Test_Env_Value(t *testing.T) {
 		// last wins
 		require.Equal(t, "value3", env.Value[string]("${key}"))
 
-		// coversions
+		// conversions
 		require.Equal(t, "123", env.Value[string]("${int}"))
 		require.Equal(t, 123, env.Value[int]("${int}"))
 		require.Equal(t, float32(123.0), env.Value[float32]("${int}"))
@@ -67,5 +67,26 @@ func Test_Env_ConfigurationProperties(t *testing.T) {
 		require.Equal(t, 111, db.port1)
 		require.Equal(t, 0, db.port2)
 		require.Equal(t, Port(333), db.port3)
+	})
+}
+
+func Test_Env_MatchesProfiles(t *testing.T) {
+	t.Run("should match profiles properly", func(t *testing.T) {
+		env.SetActiveProfiles("test,hsqldb")
+
+		require.True(t, env.MatchesProfiles())
+		require.True(t, env.MatchesProfiles("test"))
+		require.True(t, env.MatchesProfiles("hsqldb"))
+		require.True(t, env.MatchesProfiles("!prod"))
+		require.False(t, env.MatchesProfiles("prod"))
+		require.False(t, env.MatchesProfiles("qa"))
+
+		require.True(t, env.MatchesProfiles("test & hsqldb"))
+		require.True(t, env.MatchesProfiles("(test & hsqldb) | prod"))
+		require.False(t, env.MatchesProfiles("prod & hsqldb"))
+		require.True(t, env.MatchesProfiles("prod | hsqldb"))
+		require.False(t, env.MatchesProfiles("prod | qa"))
+
+		require.True(t, env.MatchesProfiles("prod", "hsqldb"))
 	})
 }

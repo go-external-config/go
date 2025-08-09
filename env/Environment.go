@@ -14,6 +14,7 @@ import (
 	"github.com/go-external-config/go/util"
 	"github.com/go-external-config/go/util/collection"
 	"github.com/go-external-config/go/util/regex"
+	"github.com/go-external-config/go/util/text"
 )
 
 type Environment struct {
@@ -67,8 +68,40 @@ func (e *Environment) ResolveRequiredPlaceholders(expression string) any {
 //
 // If a profile begins with '!' the logic is inverted, meaning this method will return true if the given profile is not active.
 // For example, env.MatchesProfiles("p1", "!p2") will return true if profile 'p1' is active or 'p2' is not active.
+// A compound expression allows for more complicated profile logic to be expressed, for example "production & cloud".
 func (e *Environment) MatchesProfiles(profiles ...string) bool {
-	panic("Not implemented")
+	if len(profiles) == 0 {
+		return true
+	}
+	activeProfiles := collection.SliceToSet(e.activeProfiles)
+	processor := text.PatternProcessorOf("(?P<word>\\w+)|(?P<sign>\\W)")
+	processor.OverrideResolve(func(match *regex.Match,
+		super func(*regex.Match) any) any {
+		word := match.NamedGroup("word")
+		sign := match.NamedGroup("sign")
+
+		if word.Present() {
+			if _, found := activeProfiles[word.Value()]; found {
+				return true
+			} else {
+				return false
+			}
+		}
+		switch sign.Value() {
+		case "&":
+			return "&&"
+		case "|":
+			return "||"
+		default:
+			return match.Expr()
+		}
+	})
+	for _, profile := range profiles {
+		if Value[bool](fmt.Sprintf("#{%v}", processor.ProcessRecursive(profile, false))) {
+			return true
+		}
+	}
+	return false
 }
 
 // last wins

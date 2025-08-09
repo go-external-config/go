@@ -53,6 +53,15 @@ func ActiveProfiles() []string {
 	return Instance().activeProfiles
 }
 
+// Determine whether one or more of the given profiles is active.
+//
+// If a profile begins with '!' the logic is inverted, meaning this method will return true if the given profile is not active.
+// For example, env.MatchesProfiles("p1", "!p2") will return true if profile 'p1' is active or 'p2' is not active.
+// A compound expression allows for more complicated profile logic to be expressed, for example "production & cloud".
+func MatchesProfiles(profiles ...string) bool {
+	return Instance().MatchesProfiles(profiles...)
+}
+
 // Bootstrap new environment with profiles listed, last wins.
 // Do nothing if very profiles are already set in the specified order.
 // Reload environment if empty value provided
