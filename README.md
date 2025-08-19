@@ -97,6 +97,24 @@ When running applications on a cloud platform (such as Kubernetes) you often nee
 	my.name=Service1
 	my.cluster=${CLUSTER}
 
+## Binding From Environment Variables
+
+Most operating systems impose strict rules around the names that can be used for environment variables. For example, Linux shell variables can contain only letters (`a` to `z` or `A` to `Z`), numbers (`0` to `9`) or the underscore character (`_`). By convention, Unix shell variables will also have their names in UPPERCASE.
+
+go-external-config’s relaxed binding rules are, as much as possible, designed to be compatible with these naming restrictions.
+
+To convert a property name in the canonical-form to an environment variable name you can follow these rules:
+
+* Replace dots (`.`) with underscores (`_`).
+* Remove any dashes (`-`).
+* Convert to uppercase.
+
+For example, the configuration property `main.log-startup-info` would be an environment variable named `MAIN_LOGSTARTUPINFO`.
+
+Environment variables can also be used when binding to object lists. To bind to a `List`, the element number should be surrounded with underscores in the variable name.
+
+For example, the configuration property `my.service[0].other` would use an environment variable named `MY_SERVICE_0_OTHER`.
+
 ## Property Placeholders
 
 The values in `application.properties` and `application.yaml` are filtered through the existing `Environment` when they are used, so you can refer back to previously defined values (for example, from environment variables). The standard `${name}` property-placeholder syntax can be used anywhere within a value. Property placeholders can also specify a default value using a `:` to separate the default value from the property name, for example `${name:default}`.
