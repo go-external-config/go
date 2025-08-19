@@ -2,6 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/go-external-config/go.svg)](https://pkg.go.dev/github.com/go-external-config/go)
 [![Go Report Card](https://goreportcard.com/badge/github.com/go-external-config/go)](https://goreportcard.com/report/github.com/go-external-config/go)
+[![Release](https://img.shields.io/github/v/release/go-external-config/go)](https://github.com/go-external-config/go/releases)
 
 go-external-config lets you externalize your configuration so that you can work with the same application code in different environments. You can use a variety of external configuration sources including properties files, YAML files, environment variables, and command-line arguments.
 
@@ -150,9 +151,9 @@ The preceding example would be transformed into these properties:
 
 ## Base64 encoding
 
-[Base64PropertySource](https://github.com/go-external-config/go/blob/main/env/Base64PropertySource.go) (available by default) is useful for dencoding property values encoded with Base64 format as shown in the following example:  
+[Base64PropertySource](https://github.com/go-external-config/go/blob/main/env/Base64PropertySource.go) (available by default) is useful for decoding property values in Base64 format as shown in the following example:  
 
-	my.secret=${base64:c2FjcmVkIHNlY3JldA==}
+	my.secret=base64:c2FjcmVkIHNlY3JldA==
 
 ## Configuration Properties
 
@@ -218,5 +219,5 @@ You can programmatically set active profiles by calling `env.SetActiveProfiles("
 ```bash
 go get github.com/go-external-config/go
 ```
-### Use it with
+### See also
 [github.com/go-beans/go](https://github.com/go-beans/go)
