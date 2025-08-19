@@ -8,7 +8,7 @@ import (
 )
 
 func Test_Parse(t *testing.T) {
-	t.Run("should produce sane results'", func(t *testing.T) {
+	t.Run("parse string as different values'", func(t *testing.T) {
 		value := "123"
 
 		require.Equal(t, int(123), str.Parse[int](value))
@@ -27,5 +27,18 @@ func Test_Parse(t *testing.T) {
 		type Port int8
 		require.Equal(t, Port(123), str.Parse[Port](value))
 		require.Equal(t, true, str.Parse[bool]("true"))
+	})
+}
+
+func Test_ReplaceChars(t *testing.T) {
+	t.Run("replace characters in a string'", func(t *testing.T) {
+		rules := map[rune]rune{
+			'.': '_',
+			'[': '_',
+			']': '_',
+			'-': 0, // delete
+		}
+		require.Equal(t, "FOO_BARBAZ", str.ReplaceChars("foo.bar-baz", rules))
+		require.Equal(t, "A_B_CD", str.ReplaceChars("a[b]c-d", rules))
 	})
 }

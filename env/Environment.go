@@ -14,8 +14,16 @@ import (
 	"github.com/go-external-config/go/util"
 	"github.com/go-external-config/go/util/collection"
 	"github.com/go-external-config/go/util/regex"
+	"github.com/go-external-config/go/util/str"
 	"github.com/go-external-config/go/util/text"
 )
+
+var envVarCanonicalFormTranslationRule = map[rune]rune{
+	'.': '_',
+	'[': '_',
+	']': '_',
+	'-': 0, // delete
+}
 
 type Environment struct {
 	activeProfiles        []string
@@ -50,6 +58,8 @@ func (e *Environment) lookupRawProperty(key string) *util.Optional[string] {
 		return util.OptionalOfValue(e.paramsPropertySource.Property(key))
 	} else if e.environPropertySource.HasProperty(key) {
 		return util.OptionalOfValue(e.environPropertySource.Property(key))
+	} else if envCanonical := e.envVarCanonicalForm(key); e.environPropertySource.HasProperty(envCanonical) {
+		return util.OptionalOfValue(e.environPropertySource.Property(envCanonical))
 	} else {
 		for i := len(e.propertySources) - 1; i >= 0; i-- {
 			if e.propertySources[i].HasProperty(key) {
@@ -204,6 +214,10 @@ func (e *Environment) tryLoad(resource io.Resource, fantomExt string) {
 	if result.HasProperty("active.profiles") && len(e.activeProfiles) == 1 && e.activeProfiles[0] == "default" {
 		e.activeProfiles = append(e.activeProfiles, strings.Split(result.Property("active.profiles"), ",")...)
 	}
+}
+
+func (e *Environment) envVarCanonicalForm(key string) string {
+	return strings.ToUpper(str.ReplaceChars(key, envVarCanonicalFormTranslationRule))
 }
 
 // custom property source as additional logic for properties processing, like property=base64:dGVzdAo=, see Base64PropertySource as an example

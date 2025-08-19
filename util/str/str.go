@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
+	"unicode"
 
 	"github.com/go-external-config/go/lang"
 )
@@ -74,4 +76,19 @@ func ParseOfType(value string, t reflect.Type) any {
 	default:
 		panic(fmt.Sprintf("Unsupported type: %s", t))
 	}
+}
+
+func ReplaceChars(str string, rules map[rune]rune) string {
+	var builder strings.Builder
+	builder.Grow(len(str))
+	for _, rule := range str {
+		if replacement, ok := rules[rule]; ok {
+			if replacement != 0 { // 0 means 'delete'
+				builder.WriteRune(replacement)
+			}
+		} else {
+			builder.WriteRune(unicode.ToUpper(rule))
+		}
+	}
+	return builder.String()
 }
