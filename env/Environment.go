@@ -179,8 +179,8 @@ func (e *Environment) loadConfiguration(location, name, profile string) {
 		fantomExt = match.NamedGroup("fantomExt").Value()
 	}
 
-	resource := e.resourceLoader.Resolve(location)
 	if strings.HasSuffix(location, "/") {
+		resource := e.resourceLoader.Resolve(location)
 		e.tryLoad(resource.CreateRelative(lang.If(profile == "default", name+".yml", name+"-"+profile+".yml")), fantomExt)
 		e.tryLoad(resource.CreateRelative(lang.If(profile == "default", name+".yaml", name+"-"+profile+".yaml")), fantomExt)
 		e.tryLoad(resource.CreateRelative(lang.If(profile == "default", name+".properties", name+"-"+profile+".properties")), fantomExt)
@@ -188,8 +188,11 @@ func (e *Environment) loadConfiguration(location, name, profile string) {
 		e.tryLoad(resource.CreateRelative(lang.If(profile == "default", name+".yml", name+"-"+profile+".yml")), fantomExt)
 		e.tryLoad(resource.CreateRelative(lang.If(profile == "default", name+".yaml", name+"-"+profile+".yaml")), fantomExt)
 		e.tryLoad(resource.CreateRelative(lang.If(profile == "default", name+".properties", name+"-"+profile+".properties")), fantomExt)
+	} else if len(fantomExt) > 0 {
+		e.tryLoad(e.resourceLoader.Resolve(lang.If(profile == "default", location, location+"-"+profile)), fantomExt)
 	} else {
-		e.tryLoad(lang.If(profile == "default", resource, resource.CreateRelative("-"+profile)), fantomExt)
+		ext := filepath.Ext(location)
+		e.tryLoad(e.resourceLoader.Resolve(lang.If(profile == "default", location, location[:len(location)-len(ext)]+"-"+profile+ext)), fantomExt)
 	}
 }
 
