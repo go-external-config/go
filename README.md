@@ -59,7 +59,7 @@ In most situations, each `config.location` item you add will reference a single 
 
 If you have a complex location setup, and you use profile-specific configuration files, you may need to provide further hints so that go-external-config knows how they should be grouped. A location group is a collection of locations that are all considered at the same level. Items within a location group should be separated with `;`. See the example in the Profile Specific Files section for more details.
 
-Locations configured by using `config.location` replace the default locations. If you prefer to add additional locations, rather than replacing them, you can use `config.additional-location` property (or `CONFIG_ADDITIONAL_LOCATION` environment variable). Properties loaded from additional locations can override those in the default locations.
+Locations configured by using `config.location` replace the default locations. If you prefer to add additional locations, rather than replacing them, you can use `config.additional-location` property (or `CONFIG_ADDITIONALLOCATION` environment variable). Properties loaded from additional locations can override those in the default locations.
 
 This search ordering lets you specify default values in one configuration file and then selectively override those values in another. You can provide default values for your application in `application.properties` (or whatever other basename you choose with `config.name`) in one of the default locations. These default values can then be overridden at runtime with a different file located in one of the custom locations.
 
