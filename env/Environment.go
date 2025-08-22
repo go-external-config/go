@@ -18,6 +18,7 @@ import (
 	"github.com/go-external-config/go/util/text"
 )
 
+var locationPattern = regexp.MustCompile(`(?P<location>.+)\[(?P<fantomExt>\.[\w]+)\]`)
 var envVarCanonicalFormTranslationRule = map[rune]rune{
 	'.': '_',
 	'[': '_',
@@ -171,7 +172,6 @@ func (e *Environment) loadApplicationConfiguration(bootstrapProfiles string) {
 }
 
 func (e *Environment) loadConfiguration(location, name, profile string) {
-	locationPattern := regexp.MustCompile(`(?P<location>.+)\[(?P<fantomExt>\.[\w]+)\]`)
 	var fantomExt string
 	for _, m := range locationPattern.FindAllStringSubmatchIndex(location, -1) {
 		match := regex.MatchOf(locationPattern, location, m)
@@ -181,29 +181,29 @@ func (e *Environment) loadConfiguration(location, name, profile string) {
 
 	if strings.HasSuffix(location, "/") {
 		resource := e.resourceLoader.Resolve(location)
-		e.tryLoad(resource.CreateRelative(lang.If(profile == "default", name+".yml", name+"-"+profile+".yml")), fantomExt)
-		e.tryLoad(resource.CreateRelative(lang.If(profile == "default", name+".yaml", name+"-"+profile+".yaml")), fantomExt)
-		e.tryLoad(resource.CreateRelative(lang.If(profile == "default", name+".properties", name+"-"+profile+".properties")), fantomExt)
+		e.loadResource(resource.CreateRelative(lang.If(profile == "default", name+".yml", name+"-"+profile+".yml")), fantomExt)
+		e.loadResource(resource.CreateRelative(lang.If(profile == "default", name+".yaml", name+"-"+profile+".yaml")), fantomExt)
+		e.loadResource(resource.CreateRelative(lang.If(profile == "default", name+".properties", name+"-"+profile+".properties")), fantomExt)
 		name = "config/" + name
-		e.tryLoad(resource.CreateRelative(lang.If(profile == "default", name+".yml", name+"-"+profile+".yml")), fantomExt)
-		e.tryLoad(resource.CreateRelative(lang.If(profile == "default", name+".yaml", name+"-"+profile+".yaml")), fantomExt)
-		e.tryLoad(resource.CreateRelative(lang.If(profile == "default", name+".properties", name+"-"+profile+".properties")), fantomExt)
+		e.loadResource(resource.CreateRelative(lang.If(profile == "default", name+".yml", name+"-"+profile+".yml")), fantomExt)
+		e.loadResource(resource.CreateRelative(lang.If(profile == "default", name+".yaml", name+"-"+profile+".yaml")), fantomExt)
+		e.loadResource(resource.CreateRelative(lang.If(profile == "default", name+".properties", name+"-"+profile+".properties")), fantomExt)
 	} else if len(fantomExt) > 0 {
-		e.tryLoad(e.resourceLoader.Resolve(lang.If(profile == "default", location, location+"-"+profile)), fantomExt)
+		e.loadResource(e.resourceLoader.Resolve(lang.If(profile == "default", location, location+"-"+profile)), fantomExt)
 	} else {
 		ext := filepath.Ext(location)
-		e.tryLoad(e.resourceLoader.Resolve(lang.If(profile == "default", location, location[:len(location)-len(ext)]+"-"+profile+ext)), fantomExt)
+		e.loadResource(e.resourceLoader.Resolve(lang.If(profile == "default", location, location[:len(location)-len(ext)]+"-"+profile+ext)), fantomExt)
 	}
 }
 
-func (e *Environment) tryLoad(resource io.Resource, fantomExt string) {
+func (e *Environment) loadResource(resource io.Resource, fantomExt string) {
 	if !resource.Exists() {
 		return
 	}
 	var result PropertySource
 	slog.Info(fmt.Sprintf("%T: loading properties from %s", *e, resource.String()))
 	ext := lang.FirstNonEmpty(fantomExt, filepath.Ext(resource.URL().Path))
-	lang.AssertState(len(ext) != 0, "Cannot load from location %s. Either use '/' at the end if location supposed to be a directory or provide fantom extension like [.yaml] to derive property source type", resource.URL())
+	lang.AssertState(len(ext) != 0, "Cannot load from location %s. If location supposed to be a directory use '/' at the end. Otherwise provide extension hint in square brackets like [.properties] to derive property source type", resource.URL().Path)
 	content := string(util.OptionalOfCommaErr(goio.ReadAll(resource.Reader())).OrElsePanic("Cannot read from %s", resource.URL().Path))
 	switch ext {
 	case ".properties":
@@ -211,12 +211,29 @@ func (e *Environment) tryLoad(resource io.Resource, fantomExt string) {
 	case ".yaml", ".yml":
 		result = NewYamlPropertySource(resource.URL().Path, content)
 	default:
-		panic(fmt.Sprintf("Cannot load from %s as %s file types are not supported. Use fantom extension if applicable, like app.env[.properties]", resource.URL(), ext))
+		panic(fmt.Sprintf("Cannot load from %s as %s file type is not supported. Use extension hint in square brackets like .env[.properties] to derive property source type", resource.URL().Path, ext))
 	}
 	e.propertySources = append(e.propertySources, result)
 	if result.HasProperty("active.profiles") && len(e.activeProfiles) == 1 && e.activeProfiles[0] == "default" {
 		e.activeProfiles = append(e.activeProfiles, strings.Split(result.Property("active.profiles"), ",")...)
 	}
+	if result.HasProperty("config.import") {
+		for _, location := range strings.Split(result.Property("config.import"), ",") {
+			e.loadImport(resource, location)
+		}
+	}
+}
+
+func (e *Environment) loadImport(resource io.Resource, location string) {
+	var fantomExt string
+	for _, m := range locationPattern.FindAllStringSubmatchIndex(location, -1) {
+		match := regex.MatchOf(locationPattern, location, m)
+		location = match.NamedGroup("location").Value()
+		fantomExt = match.NamedGroup("fantomExt").Value()
+	}
+	lang.AssertState(!strings.HasSuffix(location, "/"), "Cannot load from location %s defined in %s. Directory import is not supported", location, resource.URL().Path)
+	importResource := e.resourceLoader.Resolve(location)
+	e.loadResource(lang.If(strings.HasPrefix(importResource.URL().Path, "/"), importResource, resource.CreateRelative("../"+location)), fantomExt)
 }
 
 func (e *Environment) envVarCanonicalForm(key string) string {

@@ -90,6 +90,61 @@ When we have `cfg/;ext/` instead (with a `;` delimiter) we process `cfg` and `ex
 	cfg/application-live.properties
 	ext/application-live.properties
 
+## Importing Additional Data
+
+Application properties may import further config data from other locations using the `config.import` property. Imports are processed as they are discovered, and are treated as additional documents inserted immediately below the one that declares the import.
+
+For example, you might have the following in your `application.properties` file:
+
+	application.name=myapp
+	config.import=./dev.properties
+
+This will trigger the import of a `dev.properties` file in current directory (if such a file exists). Values from the imported `dev.properties` will take precedence over the file that triggered the import. In the above example, the `dev.properties` could redefine `application.name` to a different value.
+
+An import will only be imported once no matter how many times it is declared.
+
+## Using “Fixed” and “Import Relative” Locations
+
+Imports may be specified as _fixed_ or _import relative_ locations. A fixed location always resolves to the same underlying resource, regardless of where the `config.import` property is declared. An import relative location resolves relative to the file that declares the config.import property.
+
+A location starting with a forward slash (`/`) is considered fixed. All other locations are considered import relative.
+
+As an example, say we have a `/demo` directory containing our application file. We might add a `/demo/application.properties` file with the following content:
+
+	config.import=core/core.properties
+
+This is an import relative location and so will attempt to load the file `/demo/core/core.properties` if it exists.
+
+If `/demo/core/core.properties` has the following content:
+
+	config.import=extra/extra.properties
+
+It will attempt to load `/demo/core/extra/extra.properties`. The `extra/extra.properties` is relative to `/demo/core/core.properties` so the full directory is `/demo/core/` + `extra/extra.properties`.
+
+## Property Ordering
+
+The order an import is defined inside a single document within the properties/yaml file does not matter. For instance, the two examples below produce the same result:
+
+	config.import=my.properties
+	my.property=value
+
+	my.property=value
+	config.import=my.properties
+
+In both of the above examples, the values from the `my.properties` file will take precedence over the file that triggered its import.
+
+Several locations can be specified under a single `config.import` key. Locations will be processed in the order that they are defined, with later imports taking precedence.
+
+> Profile resolution doesn't happen for import. The example above would import direct resource `my.properties` and will not pick-up `my-<profile>.properties` variants. Directory import is not supported.
+
+## Importing Extensionless Files
+
+Some cloud platforms cannot add a file extension to volume mounted files. To import these extensionless files, you need to give go-external-config a hint so that it knows how to load them. You can do this by putting an extension hint in square brackets.
+
+For example, suppose you have a `/etc/config/myconfig` file that you wish to import as yaml. You can import it from your `application.properties` using the following:
+
+	config.import=/etc/config/myconfig[.yaml]
+
 ## Using Environment Variables
 
 When running applications on a cloud platform (such as Kubernetes) you often need to read config values that the platform supplies. Assume there’s an environment variable called `CLUSTER`:
