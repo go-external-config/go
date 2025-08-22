@@ -128,6 +128,8 @@ The order an import is defined inside a single document within the properties/ya
 	config.import=my.properties
 	my.property=value
 
+and
+
 	my.property=value
 	config.import=my.properties
 
@@ -135,7 +137,7 @@ In both of the above examples, the values from the `my.properties` file will tak
 
 Several locations can be specified under a single `config.import` key. Locations will be processed in the order that they are defined, with later imports taking precedence.
 
-> Profile resolution doesn't happen for import. The example above would import direct resource `my.properties` and will not pick-up `my-<profile>.properties` variants. Directory import is not supported.
+> Profile resolution does not happen for import. The example above would import direct resource `my.properties` and no `my-<profile>.properties` variants. Directory import is not supported.
 
 ## Importing Extensionless Files
 
