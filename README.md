@@ -103,7 +103,7 @@ This will trigger the import of a `dev.properties` file in current directory (if
 
 An import will only be imported once no matter how many times it is declared.
 
-## Using “Fixed” and “Import Relative” Locations
+### Using “Fixed” and “Import Relative” Locations
 
 Imports may be specified as _fixed_ or _import relative_ locations. A fixed location always resolves to the same underlying resource, regardless of where the `config.import` property is declared. An import relative location resolves relative to the file that declares the config.import property.
 
@@ -121,7 +121,7 @@ If `/demo/core/core.properties` has the following content:
 
 It will attempt to load `/demo/core/extra/extra.properties`. The `extra/extra.properties` is relative to `/demo/core/core.properties` so the full directory is `/demo/core/` + `extra/extra.properties`.
 
-## Property Ordering
+### Property Ordering
 
 The order an import is defined inside a single document within the properties/yaml file does not matter. For instance, the two examples below produce the same result:
 
@@ -139,7 +139,7 @@ Several locations can be specified under a single `config.import` key. Locations
 
 > Profile resolution does not happen for import. The example above would import direct resource `my.properties` and no `my-<profile>.properties` variants. Directory import is not supported.
 
-## Importing Extensionless Files
+### Importing Extensionless Files
 
 Some cloud platforms cannot add a file extension to volume mounted files. To import these extensionless files, you need to give go-external-config a hint so that it knows how to load them. You can do this by putting an extension hint in square brackets.
 
@@ -154,7 +154,7 @@ When running applications on a cloud platform (such as Kubernetes) you often nee
 	my.name=Service1
 	my.cluster=${CLUSTER}
 
-## Binding From Environment Variables
+### Binding From Environment Variables
 
 Most operating systems impose strict rules around the names that can be used for environment variables. For example, Linux shell variables can contain only letters (`a` to `z` or `A` to `Z`), numbers (`0` to `9`) or the underscore character (`_`). By convention, Unix shell variables will also have their names in UPPERCASE.
 
@@ -187,7 +187,7 @@ You can also use this technique to create “short” variants of existing prope
 
 	server.port=${port:8080}
 
-## Encrypting Properties
+### Encrypting Properties
 
 go-external-config does not provide any built-in support for encrypting property values, however, it does provide the hook point necessary to modify values contained in the Environment. See [Base64PropertySource](https://github.com/go-external-config/go/blob/main/env/Base64PropertySource.go) as an example. The same way you can load property from external location, for example AWS Systems Manager Parameter Store etc.
 
@@ -245,7 +245,7 @@ Using the `env.Value[string]("${property}")` to inject configuration properties 
 
 > Host value will be looked-up in `db.Host` and `db.host` properties
 
-## Properties Conversion
+### Properties Conversion
 
 go-external-config attempts to coerce the external application properties to the right type when it binds the `env.Value[type]()` or the `env.ConfigurationProperties()`.
 
@@ -281,7 +281,7 @@ If no profile is active, a default profile is enabled.
 
 The `profiles.active` property follows the same ordering rules as other properties. The highest `PropertySource` wins. This means that you can specify active profiles in `application.properties` and then replace them by using the command line switch.
 
-## Programmatically Setting Profiles
+### Programmatically Setting Profiles
 
 You can programmatically set active profiles by calling `env.SetActiveProfiles("...")` before your application runs. This can be useful for tests to mock `Bean`s or other scenarious.
 
