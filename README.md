@@ -46,8 +46,8 @@ You can also refer to an explicit location by using the `config.location` proper
 The following example shows how to specify two distinct files:  
 
 	go run ./cmd/myproject/ --config.location=\
-		default.properties,\
-		override.properties
+	  default.properties,\
+	  override.properties
 
 > Locations are optional and application will not fail if they do not exist.
 
@@ -73,10 +73,10 @@ The last-wins strategy applies at the location group level. A `config.location` 
 For example, continuing our prod,live example above, we might have the following files:  
 
 	cfg
-		application-live.properties
+	  application-live.properties
 	ext
-		application-live.properties
-		application-prod.properties
+	  application-live.properties
+	  application-prod.properties
 
 When we have a `config.location` of `cfg/,ext/` we process all `cfg` files before all `ext` files:  
 
@@ -198,12 +198,12 @@ YAML is a superset of JSON and, as such, is a convenient format for specifying h
 YAML documents need to be converted from their hierarchical format to a flat structure that can be used with the `Environment`. For example, consider the following YAML document:  
 
 	environments:
-		dev:
-			url: "https://dev.example.com"
-			name: "Developer Setup"
-		prod:
-			url: "https://another.example.com"
-			name: "My Cool App"
+	  dev:
+	    url: "https://dev.example.com"
+	    name: "Developer Setup"
+	  prod:
+	    url: "https://another.example.com"
+	    name: "My Cool App"
 
 In order to access these properties from the `Environment`, they would be flattened as follows:  
 
@@ -215,9 +215,9 @@ In order to access these properties from the `Environment`, they would be flatte
 Likewise, YAML lists also need to be flattened. They are represented as property keys with [index] dereferencers. For example, consider the following YAML:  
 
 	my:
-		servers:
-		- "dev.example.com"
-		- "another.example.com"
+	  servers:
+	  - "dev.example.com"
+	  - "another.example.com"
 
 The preceding example would be transformed into these properties:  
 
@@ -235,10 +235,10 @@ The preceding example would be transformed into these properties:
 Using the `env.Value[string]("${property}")` to inject configuration properties can sometimes be cumbersome, especially if you are working with multiple properties or your data is hierarchical in nature. go-external-config provides an alternative method of working with properties that lets strongly typed fields govern and validate the configuration of your application. It is possible to bind struct properties as shown in the following example:
 
 	var db struct {
-		Host  string
-		Port  int
-		Username string
-		Password string
+	    Host  string
+	    Port  int
+	    Username string
+	    Password string
 	}
 	
 	env.ConfigurationProperties("db", &db)
@@ -262,15 +262,15 @@ go-external-config provides support for [expr-lang](https://github.com/expr-lang
 go-external-config provide a way to segregate parts of your application configuration and make it be available only in certain environments. Any `Bean` can be created with `Profile` to limit when it is loaded, as shown in the following example ([go-beans](https://github.com/go-beans/go) dependency required):
 
 	ioc.Bean[http.Client]().Profile("prod").Factory(func() *http.Client {
-		return &http.Client{
-			Timeout: 60 * time.Second,
-			Transport: &http.Transport{
-				MaxIdleConns:          100,
-				IdleConnTimeout:       90 * time.Second,
-				TLSHandshakeTimeout:   10 * time.Second,
-				ExpectContinueTimeout: 1 * time.Second,
-			},
-		}
+	    return &http.Client{
+	        Timeout: 60 * time.Second,
+	        Transport: &http.Transport{
+	            MaxIdleConns:          100,
+	            IdleConnTimeout:       90 * time.Second,
+	            TLSHandshakeTimeout:   10 * time.Second,
+	            ExpectContinueTimeout: 1 * time.Second,
+	        },
+	    }
 	}).Register()
 
 You can use a `profiles.active` `Environment` property to specify which profiles are active. You can specify the property in any of the ways described earlier in this chapter. For example, you could include it in your `application.properties`, as shown in the following example:
@@ -294,5 +294,5 @@ You can programmatically set active profiles by calling `env.SetActiveProfiles("
 ```bash
 go get github.com/go-external-config/go
 ```
-## See also
+### See also
 [github.com/go-beans/go](https://github.com/go-beans/go)
