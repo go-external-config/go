@@ -261,7 +261,7 @@ go-external-config provides support for [expr-lang](https://github.com/expr-lang
 
 go-external-config provide a way to segregate parts of your application configuration and make it be available only in certain environments. Any `Bean` can be created with `Profile` to limit when it is loaded, as shown in the following example ([go-beans](https://github.com/go-beans/go) dependency required):
 
-	ioc.Bean[http.Client]().Profile("prod").Factory(func() *http.Client {
+	ioc.Bean[*http.Client]().Profile("prod").Factory(func() *http.Client {
 	    return &http.Client{
 	        Timeout: 60 * time.Second,
 	        Transport: &http.Transport{
@@ -294,5 +294,6 @@ You can programmatically set active profiles by calling `env.SetActiveProfiles("
 ```bash
 go get github.com/go-external-config/go
 ```
-### See also
+
+## See also
 [github.com/go-beans/go](https://github.com/go-beans/go)
