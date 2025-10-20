@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"strings"
 
-	"github.com/go-external-config/go/util"
+	"github.com/go-external-config/go/util/optional"
 )
 
 // custom property source as additional logic for properties processing, like property=base64:dGVzdAo=
@@ -34,7 +34,7 @@ func (s *Base64PropertySource) Property(key string) string {
 	for _, source := range environment.PropertySources() {
 		if source.Properties() != nil && source.HasProperty(key) {
 			value := source.Property(key)
-			return strings.TrimRight(string(util.OptionalOfCommaErr(base64.StdEncoding.DecodeString(value[7:])).
+			return strings.TrimRight(string(optional.OfCommaErr(base64.StdEncoding.DecodeString(value[7:])).
 				OrElsePanic("Cannot decode %s: %s", key, value)), "\n\r")
 		}
 	}

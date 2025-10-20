@@ -8,7 +8,7 @@ import (
 	"github.com/expr-lang/expr/conf"
 	"github.com/expr-lang/expr/parser"
 	"github.com/go-external-config/go/lang"
-	"github.com/go-external-config/go/util"
+	"github.com/go-external-config/go/util/optional"
 	"github.com/go-external-config/go/util/regex"
 	"github.com/go-external-config/go/util/text"
 )
@@ -50,7 +50,7 @@ func (p *ExprProcessor) Resolve(match *regex.Match,
 		}
 	} else {
 		expression := lang.FirstNonEmpty(match.NamedGroup("expr").OrElse(""), match.NamedGroup("complex").OrElse(""))
-		resolved = util.OptionalOfNilable(p.eval(expression, p.context)).OrElsePanic("Cannot evaluate expression %s", match.Expr())
+		resolved = optional.OfNilable(p.eval(expression, p.context)).OrElsePanic("Cannot evaluate expression %s", match.Expr())
 	}
 	// slog.Debug(fmt.Sprintf("ExprProcessor: %s -> %s\n", match.Expr(), resolved))
 	return resolved
@@ -67,9 +67,9 @@ func (p *ExprProcessor) Reset() {
 func (p *ExprProcessor) eval(input string, env any) any {
 	config := conf.CreateNew()
 	config.Strict = true
-	tree := util.OptionalOfCommaErr(parser.Parse(input)).OrElsePanic("Cannot parse expression")
-	program := util.OptionalOfCommaErr(compiler.Compile(tree, config)).OrElsePanic("Cannot compile expression")
-	output := util.OptionalOfCommaErr(expr.Run(program, env)).OrElsePanic("Cannot evaluate expression")
+	tree := optional.OfCommaErr(parser.Parse(input)).OrElsePanic("Cannot parse expression")
+	program := optional.OfCommaErr(compiler.Compile(tree, config)).OrElsePanic("Cannot compile expression")
+	output := optional.OfCommaErr(expr.Run(program, env)).OrElsePanic("Cannot evaluate expression")
 	return output
 }
 

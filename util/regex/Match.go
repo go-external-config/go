@@ -3,7 +3,7 @@ package regex
 import (
 	"regexp"
 
-	"github.com/go-external-config/go/util"
+	"github.com/go-external-config/go/util/optional"
 )
 
 type Match struct {
@@ -39,10 +39,10 @@ func (m *Match) GroupCount() int {
 	return len(m.subexpByIdx)
 }
 
-func (m *Match) Group(idx int) *util.Optional[string] {
-	return util.OptionalOfEntry(m.subexpByIdx, idx)
+func (m *Match) Group(idx int) *optional.Optional[string] {
+	return optional.OfEntry(m.subexpByIdx, idx)
 }
 
-func (m *Match) NamedGroup(name string) *util.Optional[string] {
-	return util.OptionalOfEntry(m.subexpByName, name)
+func (m *Match) NamedGroup(name string) *optional.Optional[string] {
+	return optional.OfEntry(m.subexpByName, name)
 }

@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-external-config/go/util"
+	"github.com/go-external-config/go/util/optional"
 )
 
 type FileResource struct {
@@ -19,7 +19,7 @@ func NewFileResource(url *url.URL) *FileResource {
 }
 
 func (r *FileResource) Reader() io.Reader {
-	return util.OptionalOfCommaErr(os.Open(r.url.Path)).OrElsePanic("Cannot open file %s", r.url.Path)
+	return optional.OfCommaErr(os.Open(r.url.Path)).OrElsePanic("Cannot open file %s", r.url.Path)
 }
 
 func (r *FileResource) URL() *url.URL {
@@ -27,13 +27,13 @@ func (r *FileResource) URL() *url.URL {
 }
 
 func (r *FileResource) CreateRelative(location string) Resource {
-	relativeLocation := util.OptionalOfCommaErr(url.PathUnescape(r.url.JoinPath(location).String())).OrElsePanic("Cannot create relative location %s + %s", r.url.Path, location)
-	relativeUrl := util.OptionalOfCommaErr(url.Parse(relativeLocation)).OrElsePanic("Cannot parse location %s", relativeLocation)
+	relativeLocation := optional.OfCommaErr(url.PathUnescape(r.url.JoinPath(location).String())).OrElsePanic("Cannot create relative location %s + %s", r.url.Path, location)
+	relativeUrl := optional.OfCommaErr(url.Parse(relativeLocation)).OrElsePanic("Cannot parse location %s", relativeLocation)
 	return NewFileResource(relativeUrl)
 }
 
 func (r *FileResource) Exists() bool {
-	return util.OptionalOfCommaErr(os.Stat(r.url.Path)).OrElse(nil) != nil
+	return optional.OfCommaErr(os.Stat(r.url.Path)).OrElse(nil) != nil
 }
 
 func (r *FileResource) Name() string {
@@ -53,5 +53,5 @@ func (r *FileResource) ModTime() time.Time {
 }
 
 func (r *FileResource) String() string {
-	return util.OptionalOfCommaErr(url.PathUnescape(r.url.String())).OrElsePanic("Cannot unescape %s", r.url)
+	return optional.OfCommaErr(url.PathUnescape(r.url.String())).OrElsePanic("Cannot unescape %s", r.url)
 }

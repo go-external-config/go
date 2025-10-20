@@ -1,4 +1,4 @@
-package util
+package optional
 
 import (
 	"fmt"
@@ -12,44 +12,44 @@ type Optional[T any] struct {
 	err     error
 }
 
-func OptionalOfNilable[T any](value T) *Optional[T] {
+func OfNilable[T any](value T) *Optional[T] {
 	return &Optional[T]{
 		value:   value,
 		present: !lang.IsNil(value)}
 }
 
-func OptionalOfEmpty[T any]() *Optional[T] {
+func OfEmpty[T any]() *Optional[T] {
 	return &Optional[T]{present: false}
 }
 
-func OptionalOfValue[T any](value T) *Optional[T] {
+func OfValue[T any](value T) *Optional[T] {
 	return &Optional[T]{
 		value:   value,
 		present: true}
 }
 
-func OptionalOfCommaOk[T any](value T, ok bool) *Optional[T] {
+func OfCommaOk[T any](value T, ok bool) *Optional[T] {
 	if !ok {
-		return OptionalOfEmpty[T]()
+		return OfEmpty[T]()
 	}
-	return OptionalOfValue(value)
+	return OfValue(value)
 }
 
-func OptionalOfCommaErr[T any](value T, e error) *Optional[T] {
+func OfCommaErr[T any](value T, e error) *Optional[T] {
 	if e != nil {
 		return &Optional[T]{
 			err: e,
 		}
 	}
-	return OptionalOfValue(value)
+	return OfValue(value)
 }
 
-func OptionalOfEntry[K comparable, V any](m map[K]V, key K) *Optional[V] {
+func OfEntry[K comparable, V any](m map[K]V, key K) *Optional[V] {
 	value, ok := m[key]
 	if !ok {
-		return OptionalOfEmpty[V]()
+		return OfEmpty[V]()
 	}
-	return OptionalOfValue(value)
+	return OfValue(value)
 }
 
 func (o *Optional[T]) Present() bool {

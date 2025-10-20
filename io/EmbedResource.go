@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/go-external-config/go/util"
+	"github.com/go-external-config/go/util/optional"
 )
 
 type EmbedResource struct {
@@ -51,5 +51,5 @@ func (r *EmbedResource) ModTime() time.Time {
 }
 
 func (r *EmbedResource) String() string {
-	return util.OptionalOfCommaErr(url.PathUnescape(r.url.String())).OrElsePanic("Cannot unescape %s", r.url)
+	return optional.OfCommaErr(url.PathUnescape(r.url.String())).OrElsePanic("Cannot unescape %s", r.url)
 }

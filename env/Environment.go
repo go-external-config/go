@@ -11,8 +11,8 @@ import (
 
 	"github.com/go-external-config/go/io"
 	"github.com/go-external-config/go/lang"
-	"github.com/go-external-config/go/util"
 	"github.com/go-external-config/go/util/collection"
+	"github.com/go-external-config/go/util/optional"
 	"github.com/go-external-config/go/util/regex"
 	"github.com/go-external-config/go/util/str"
 	"github.com/go-external-config/go/util/text"
@@ -54,21 +54,21 @@ func (e *Environment) Property(key string) any {
 		OrElsePanic("No value present for %s", key))
 }
 
-func (e *Environment) lookupRawProperty(key string) *util.Optional[string] {
+func (e *Environment) lookupRawProperty(key string) *optional.Optional[string] {
 	if e.paramsPropertySource.HasProperty(key) {
-		return util.OptionalOfValue(e.paramsPropertySource.Property(key))
+		return optional.OfValue(e.paramsPropertySource.Property(key))
 	} else if e.environPropertySource.HasProperty(key) {
-		return util.OptionalOfValue(e.environPropertySource.Property(key))
+		return optional.OfValue(e.environPropertySource.Property(key))
 	} else if envCanonical := e.envVarCanonicalForm(key); e.environPropertySource.HasProperty(envCanonical) {
-		return util.OptionalOfValue(e.environPropertySource.Property(envCanonical))
+		return optional.OfValue(e.environPropertySource.Property(envCanonical))
 	} else {
 		for i := len(e.propertySources) - 1; i >= 0; i-- {
 			if e.propertySources[i].HasProperty(key) {
-				return util.OptionalOfValue(e.propertySources[i].Property(key))
+				return optional.OfValue(e.propertySources[i].Property(key))
 			}
 		}
 	}
-	return util.OptionalOfEmpty[string]()
+	return optional.OfEmpty[string]()
 }
 
 func (e *Environment) ResolveRequiredPlaceholders(expression string) any {
@@ -204,7 +204,7 @@ func (e *Environment) loadResource(resource io.Resource, fantomExt string) {
 	slog.Info(fmt.Sprintf("%T: loading properties from %s", *e, resource.String()))
 	ext := lang.FirstNonEmpty(fantomExt, filepath.Ext(resource.URL().Path))
 	lang.AssertState(len(ext) != 0, "Cannot load from location %s. If location supposed to be a directory use '/' at the end. Otherwise provide extension hint in square brackets like [.properties] to derive property source type", resource.URL().Path)
-	content := string(util.OptionalOfCommaErr(goio.ReadAll(resource.Reader())).OrElsePanic("Cannot read from %s", resource.URL().Path))
+	content := string(optional.OfCommaErr(goio.ReadAll(resource.Reader())).OrElsePanic("Cannot read from %s", resource.URL().Path))
 	switch ext {
 	case ".properties":
 		result = NewPropertiesPropertySource(resource.URL().Path, content)

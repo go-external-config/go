@@ -5,7 +5,7 @@ import (
 	"net/url"
 
 	"github.com/go-external-config/go/lang"
-	"github.com/go-external-config/go/util"
+	"github.com/go-external-config/go/util/optional"
 )
 
 type ProtocolResolver interface {
@@ -34,7 +34,7 @@ func (l *ResourceLoader) Resource(location string) Resource {
 }
 
 func (l *ResourceLoader) Resolve(location string) Resource {
-	url := util.OptionalOfCommaErr(url.Parse(location)).OrElsePanic("Cannot parse location %s", location)
+	url := optional.OfCommaErr(url.Parse(location)).OrElsePanic("Cannot parse location %s", location)
 	schema := lang.FirstNonEmpty(url.Scheme, "file")
 	switch schema {
 	case "file":
