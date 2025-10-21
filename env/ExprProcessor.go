@@ -42,7 +42,7 @@ func (p *ExprProcessor) Resolve(match *regex.Match,
 		resolvedValue := Instance().lookupRawProperty(prop.Value())
 		defaultValue := match.NamedGroup("defaultValue")
 		if resolvedValue.Present() {
-			resolved = fmt.Sprintf("%v", resolvedValue.Value())
+			resolved = fmt.Sprint(resolvedValue.Value())
 		} else if defaultValue.Present() {
 			resolved = defaultValue.Value()
 		} else {

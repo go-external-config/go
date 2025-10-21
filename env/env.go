@@ -102,7 +102,7 @@ func convertAsType(value any, t reflect.Type) any {
 		case string:
 			return v
 		default:
-			return fmt.Sprintf("%v", v)
+			return fmt.Sprint(v)
 		}
 	default:
 		switch v := value.(type) {

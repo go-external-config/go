@@ -47,7 +47,7 @@ func (p *PatternProcessor) ProcessRecursive(str string, recursive bool) any {
 				}
 			} else {
 				sb.WriteString(resolved[lastMatch[1]:match[0]])
-				sb.WriteString(fmt.Sprintf("%v", p.resolve(regexMatch)))
+				sb.WriteString(fmt.Sprint(p.resolve(regexMatch)))
 			}
 			lastMatch = match
 		}

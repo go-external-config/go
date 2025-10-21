@@ -44,6 +44,6 @@ func (s *YamlPropertySource) flattenYaml(data any, prefix string, result map[str
 			s.flattenYaml(value, newPrefix, result)
 		}
 	default:
-		result[prefix] = fmt.Sprintf("%v", v)
+		result[prefix] = fmt.Sprint(v)
 	}
 }
