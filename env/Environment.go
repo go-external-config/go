@@ -49,9 +49,9 @@ func newEnvironment(activeProfiles string) *Environment {
 	return &environment
 }
 
-func (e *Environment) Property(key string) any {
-	return e.ResolveRequiredPlaceholders(e.lookupRawProperty(key).
-		OrElsePanic("No value present for %s", key))
+func (e *Environment) Property(key string) string {
+	return fmt.Sprint(e.ResolveRequiredPlaceholders(e.lookupRawProperty(key).
+		OrElsePanic("No value present for %s", key)))
 }
 
 func (e *Environment) lookupRawProperty(key string) *optional.Optional[string] {

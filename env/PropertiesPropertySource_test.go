@@ -23,6 +23,6 @@ func Test_PropertiesPropertySource_Resolve(t *testing.T) {
 		require.Equal(t, "val1", environment.Property("prop2"))
 		require.Equal(t, "val1", environment.Property("prop3"))
 		require.Equal(t, "val1", environment.Property("prop4"))
-		require.Equal(t, 4, environment.Property("prop5"))
+		require.Equal(t, "4", environment.Property("prop5"))
 	})
 }
