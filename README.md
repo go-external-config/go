@@ -187,9 +187,40 @@ You can also use this technique to create “short” variants of existing prope
 
 	server.port=${port:8080}
 
+## Properties Preprocessing
+
+go-external-config provides the hook point necessary to modify values contained in the Environment. You can load property from external location, for example AWS Systems Manager Parameter Store etc. See how this is implemented and works for Base64 decoding and RSA decryption.
+
+### Base64 Encoding
+
+[Base64PropertySource](https://github.com/go-external-config/go/blob/main/env/Base64PropertySource.go) (available by default) is useful for decoding property values in Base64 format as shown in the following example:  
+
+	hidden=base64:aGlkZGVu
+
 ### Encrypting Properties
 
-go-external-config does not provide any built-in support for encrypting property values, however, it does provide the hook point necessary to modify values contained in the Environment. See [Base64PropertySource](https://github.com/go-external-config/go/blob/main/env/Base64PropertySource.go) as an example. The same way you can load property from external location, for example AWS Systems Manager Parameter Store etc.
+[RsaPropertySource](https://github.com/go-external-config/go/blob/main/env/RsaPropertySource.go) (available on demand) is useful for decrypting property values in RSA format. One manual step less when conducting production release.  
+Generate an RSA private/public key:  
+
+	openssl genpkey -algorithm RSA -out private2048.pem -pkeyopt rsa_keygen_bits:2048
+	openssl rsa -pubout -in private2048.pem -out public2048.pem
+
+Encrypt password using public key:  
+
+	echo -n "dbSecret123" | openssl pkeyutl -encrypt \
+	    -pubin -inkey public2048.pem \
+	    -pkeyopt rsa_padding_mode:oaep \
+	    -pkeyopt rsa_oaep_md:sha256 | base64
+
+Enable RSA decryption in the code at the beginning of the main package:  
+
+	var environment = env.Instance().AddPropertySource(env.NewRsaPropertySource())
+
+Safely commit encrypted property with the code at feature development time.
+
+	my.secret=RSA:m+WQ5zMBqwMmEEP...
+
+Provide `rsa.privateKey.path` on the environment to decrypt at runtime.
 
 ## Working With YAML
 
@@ -223,12 +254,6 @@ The preceding example would be transformed into these properties:
 
 	my.servers[0]=dev.example.com
 	my.servers[1]=another.example.com
-
-## Base64 encoding
-
-[Base64PropertySource](https://github.com/go-external-config/go/blob/main/env/Base64PropertySource.go) (available by default) is useful for decoding property values in Base64 format as shown in the following example:  
-
-	my.secret=base64:c2FjcmVkIHNlY3JldA==
 
 ## Configuration Properties
 

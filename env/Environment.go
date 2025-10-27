@@ -240,9 +240,11 @@ func (e *Environment) envVarCanonicalForm(key string) string {
 	return strings.ToUpper(str.ReplaceChars(key, envVarCanonicalFormTranslationRule))
 }
 
-// custom property source as additional logic for properties processing, like property=base64:dGVzdAo=, see Base64PropertySource as an example
+// Add custom property source to implement additional logic for properties processing, like property=base64:dGVzdAo=.
+// See Base64PropertySource (available by default) and RsaPropertySource
 //
-//	env.Instance().AddPropertySource(env.NewBase64PropertySource(env.Instance()))
-func (e *Environment) AddPropertySource(source PropertySource) {
+//	var environment = env.Instance().AddPropertySource(env.NewRsaPropertySource())
+func (e *Environment) AddPropertySource(source PropertySource) *Environment {
 	e.propertySources = append(e.propertySources, source)
+	return e
 }

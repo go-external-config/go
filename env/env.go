@@ -65,9 +65,9 @@ func MatchesProfiles(profiles ...string) bool {
 // Bootstrap new environment with profiles listed, last wins.
 // Do nothing if very profiles are already set in the specified order.
 // Reload environment if empty value provided
-func SetActiveProfiles(profiles string) {
+func SetActiveProfiles(profiles string) *Environment {
 	if environment != nil && "default,"+profiles == strings.Join(environment.ActiveProfiles(), ",") {
-		return
+		return environment
 	}
 
 	previous := environment
@@ -81,6 +81,7 @@ func SetActiveProfiles(profiles string) {
 			}
 		}
 	}
+	return environment
 }
 
 func Instance() *Environment {
