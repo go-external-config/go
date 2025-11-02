@@ -189,13 +189,24 @@ You can also use this technique to create “short” variants of existing prope
 
 ## Properties Preprocessing
 
-go-external-config provides the hook point necessary to modify values contained in the Environment. You can load property from external location, for example AWS Systems Manager Parameter Store etc. See how this is implemented and works for Base64 decoding and RSA decryption.
+go-external-config provides the hook point necessary to modify values contained in the Environment. You can load property from external location, for example AWS Systems Manager Parameter Store etc. See how this is implemented and works for Base64 decoding, random values generation and RSA decryption.
 
 ### Base64 Encoding
 
 [Base64PropertySource](https://github.com/go-external-config/go/blob/main/env/Base64PropertySource.go) (available by default) is useful for decoding property values in Base64 format as shown in the following example:  
 
 	hidden=base64:aGlkZGVu
+
+### Random Values
+
+The [RandomValuePropertySource](https://github.com/go-external-config/go/blob/main/env/RandomValuePropertySource.go) is useful for injecting random values (for example, into secrets or test cases). It can produce int, int64, uuids, or strings, as shown in the following example:
+
+	my.secret=${random.value}
+	my.number=${random.int}
+	my.bignumber=${random.int64}
+	my.uuid=${random.uuid}
+	my.number-less-than-ten=${random.int(10)}
+	my.number-in-range=${random.int[1024,65536]}
 
 ### Encrypting Properties
 
