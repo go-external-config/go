@@ -158,11 +158,14 @@ func (e *Environment) loadApplicationConfiguration(bootstrapProfiles string) {
 	activeProfiles := lang.FirstNonEmpty(e.paramsPropertySource.properties["profiles.active"], e.environPropertySource.properties["PROFILES_ACTIVE"], bootstrapProfiles)
 	e.activeProfiles = lang.If(len(activeProfiles) == 0, e.activeProfiles, append(e.activeProfiles, strings.Split(activeProfiles, ",")...))
 	configName := lang.FirstNonEmpty(e.paramsPropertySource.properties["config.name"], e.environPropertySource.properties["CONFIG_NAME"], "application")
-	configLocation := lang.FirstNonEmpty(e.paramsPropertySource.properties["config.location"], e.environPropertySource.properties["CONFIG_LOCATION"], "./")
-	configAdditionalLocation := lang.FirstNonEmpty(e.paramsPropertySource.properties["config.additional-location"], e.environPropertySource.properties["CONFIG_ADDITIONALLOCATION"])
-	configLocation = lang.If(len(configAdditionalLocation) == 0, configLocation, configLocation+";"+configAdditionalLocation)
+	defaultLocation := "./,./config/"
+	additionalLocation := lang.FirstNonEmpty(e.paramsPropertySource.properties["config.additional-location"], e.environPropertySource.properties["CONFIG_ADDITIONALLOCATION"])
+	extendedDefaultLocation := lang.If(len(additionalLocation) == 0, defaultLocation, defaultLocation+","+additionalLocation)
+	configLocation := lang.FirstNonEmpty(e.paramsPropertySource.properties["config.location"], e.environPropertySource.properties["CONFIG_LOCATION"])
+	extendedConfigLocation := lang.If(len(additionalLocation) == 0, configLocation, additionalLocation+","+configLocation)
+	resolvedConfigLocation := lang.If(len(configLocation) == 0, extendedDefaultLocation, extendedConfigLocation)
 
-	for _, location := range strings.Split(configLocation, ",") {
+	for _, location := range strings.Split(resolvedConfigLocation, ",") {
 		for i := 0; i < len(e.activeProfiles); i++ {
 			for _, locationGroup := range strings.Split(location, ";") {
 				e.loadConfiguration(locationGroup, configName, e.activeProfiles[i])
@@ -181,10 +184,6 @@ func (e *Environment) loadConfiguration(location, name, profile string) {
 
 	if strings.HasSuffix(location, "/") {
 		resource := e.resourceLoader.Resolve(location)
-		e.loadResource(resource.CreateRelative(lang.If(profile == "default", name+".yml", name+"-"+profile+".yml")), fantomExt)
-		e.loadResource(resource.CreateRelative(lang.If(profile == "default", name+".yaml", name+"-"+profile+".yaml")), fantomExt)
-		e.loadResource(resource.CreateRelative(lang.If(profile == "default", name+".properties", name+"-"+profile+".properties")), fantomExt)
-		name = "config/" + name
 		e.loadResource(resource.CreateRelative(lang.If(profile == "default", name+".yml", name+"-"+profile+".yml")), fantomExt)
 		e.loadResource(resource.CreateRelative(lang.If(profile == "default", name+".yaml", name+"-"+profile+".yaml")), fantomExt)
 		e.loadResource(resource.CreateRelative(lang.If(profile == "default", name+".properties", name+"-"+profile+".properties")), fantomExt)
@@ -214,8 +213,8 @@ func (e *Environment) loadResource(resource io.Resource, fantomExt string) {
 		panic(fmt.Sprintf("Cannot load from %s as %s file type is not supported. Use extension hint in square brackets like .env[.properties] to derive property source type", resource.URL().Path, ext))
 	}
 	e.propertySources = append(e.propertySources, result)
-	if result.HasProperty("active.profiles") && len(e.activeProfiles) == 1 && e.activeProfiles[0] == "default" {
-		e.activeProfiles = append(e.activeProfiles, strings.Split(result.Property("active.profiles"), ",")...)
+	if result.HasProperty("profiles.active") && len(e.activeProfiles) == 1 && e.activeProfiles[0] == "default" {
+		e.activeProfiles = append(e.activeProfiles, strings.Split(result.Property("profiles.active"), ",")...)
 	}
 	if result.HasProperty("config.import") {
 		for _, location := range strings.Split(result.Property("config.import"), ",") {
