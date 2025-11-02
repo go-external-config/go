@@ -206,7 +206,7 @@ The [RandomValuePropertySource](https://github.com/go-external-config/go/blob/ma
 	my.bignumber=${random.int64}
 	my.uuid=${random.uuid}
 	my.number-less-than-ten=${random.int(10)}
-	my.number-in-range=${random.int[1024,65536]}
+	my.number-in-range=${random.int(1024,65536)}
 
 ### Encrypting Properties
 
