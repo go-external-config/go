@@ -2,16 +2,16 @@ package env
 
 import (
 	"fmt"
-	goio "io"
+	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
-	"github.com/go-external-config/go/io"
 	"github.com/go-external-config/go/lang"
 	"github.com/go-external-config/go/util/collection"
+	"github.com/go-external-config/go/util/files"
 	"github.com/go-external-config/go/util/optional"
 	"github.com/go-external-config/go/util/regex"
 	"github.com/go-external-config/go/util/str"
@@ -31,7 +31,6 @@ type Environment struct {
 	paramsPropertySource  *MapPropertySource
 	environPropertySource *MapPropertySource
 	propertySources       []PropertySource
-	resourceLoader        *io.ResourceLoader
 	exprProcessor         *ExprProcessor
 }
 
@@ -39,7 +38,6 @@ func newEnvironment(activeProfiles string) *Environment {
 	environment := Environment{
 		activeProfiles:  []string{"default"},
 		propertySources: make([]PropertySource, 0),
-		resourceLoader:  io.NewResourceLoader(),
 		exprProcessor:   ExprProcessorOf(true)}
 
 	environment.loadEnvironmentVariables()
@@ -176,6 +174,7 @@ func (e *Environment) loadApplicationConfiguration(bootstrapProfiles string) {
 }
 
 func (e *Environment) loadConfiguration(location, name, profile string) {
+	location = filepath.ToSlash(location)
 	var fantomExt string
 	for _, m := range locationPattern.FindAllStringSubmatchIndex(location, -1) {
 		match := regex.MatchOf(locationPattern, location, m)
@@ -184,34 +183,35 @@ func (e *Environment) loadConfiguration(location, name, profile string) {
 	}
 
 	if strings.HasSuffix(location, "/") {
-		resource := e.resourceLoader.Resolve(location)
-		e.loadResource(resource.CreateRelative(lang.If(profile == "default", name+".yml", name+"-"+profile+".yml")), fantomExt)
-		e.loadResource(resource.CreateRelative(lang.If(profile == "default", name+".yaml", name+"-"+profile+".yaml")), fantomExt)
-		e.loadResource(resource.CreateRelative(lang.If(profile == "default", name+".properties", name+"-"+profile+".properties")), fantomExt)
+		e.loadFile(files.RelativePath(location, lang.If(profile == "default", name+".yml", name+"-"+profile+".yml")), fantomExt)
+		e.loadFile(files.RelativePath(location, lang.If(profile == "default", name+".yaml", name+"-"+profile+".yaml")), fantomExt)
+		e.loadFile(files.RelativePath(location, lang.If(profile == "default", name+".properties", name+"-"+profile+".properties")), fantomExt)
 	} else if len(fantomExt) > 0 {
-		e.loadResource(e.resourceLoader.Resolve(lang.If(profile == "default", location, location+"-"+profile)), fantomExt)
+		e.loadFile(lang.If(profile == "default", location, location+"-"+profile), fantomExt)
 	} else {
 		ext := filepath.Ext(location)
-		e.loadResource(e.resourceLoader.Resolve(lang.If(profile == "default", location, location[:len(location)-len(ext)]+"-"+profile+ext)), fantomExt)
+		e.loadFile(lang.If(profile == "default", location, location[:len(location)-len(ext)]+"-"+profile+ext), fantomExt)
 	}
 }
 
-func (e *Environment) loadResource(resource io.Resource, fantomExt string) {
-	if !resource.Exists() {
+func (e *Environment) loadFile(path, fantomExt string) {
+	if !files.Exists(path) {
 		return
 	}
 	var result PropertySource
-	slog.Info(fmt.Sprintf("%T: loading properties from %s", *e, resource.String()))
-	ext := lang.FirstNonEmpty(fantomExt, filepath.Ext(resource.URL().Path))
-	lang.AssertState(len(ext) != 0, "Cannot load from location %s. If location supposed to be a directory use '/' at the end. Otherwise provide extension hint in square brackets like [.properties] to derive property source type", resource.URL().Path)
-	content := string(optional.OfCommaErr(goio.ReadAll(resource.Reader())).OrElsePanic("Cannot read from %s", resource.URL().Path))
+	slog.Info(fmt.Sprintf("%T: loading properties from %s", *e, path))
+	ext := lang.FirstNonEmpty(fantomExt, filepath.Ext(path))
+	lang.AssertState(len(ext) != 0, "Cannot load from location %s. If location supposed to be a directory use '/' at the end. Otherwise provide extension hint in square brackets like [.properties] to derive property source type", path)
+	file := optional.OfCommaErr(os.Open(path)).OrElsePanic("Cannot open file %s", path)
+	defer file.Close()
+	content := string(optional.OfCommaErr(io.ReadAll(file)).OrElsePanic("Cannot read from %s", path))
 	switch ext {
 	case ".properties":
-		result = NewPropertiesPropertySource(resource.URL().Path, content)
+		result = NewPropertiesPropertySource(path, content)
 	case ".yaml", ".yml":
-		result = NewYamlPropertySource(resource.URL().Path, content)
+		result = NewYamlPropertySource(path, content)
 	default:
-		panic(fmt.Sprintf("Cannot load from %s as %s file type is not supported. Use extension hint in square brackets like .env[.properties] to derive property source type", resource.URL().Path, ext))
+		panic(fmt.Sprintf("Cannot load from %s as %s file type is not supported. Use extension hint in square brackets like .env[.properties] to derive property source type", path, ext))
 	}
 	e.propertySources = append(e.propertySources, result)
 	if result.HasProperty("profiles.active") && len(e.activeProfiles) == 1 && e.activeProfiles[0] == "default" {
@@ -219,21 +219,21 @@ func (e *Environment) loadResource(resource io.Resource, fantomExt string) {
 	}
 	if result.HasProperty("config.import") {
 		for _, location := range strings.Split(result.Property("config.import"), ",") {
-			e.loadImport(resource, location)
+			e.loadImport(path, location)
 		}
 	}
 }
 
-func (e *Environment) loadImport(resource io.Resource, location string) {
+func (e *Environment) loadImport(path, location string) {
 	var fantomExt string
 	for _, m := range locationPattern.FindAllStringSubmatchIndex(location, -1) {
 		match := regex.MatchOf(locationPattern, location, m)
 		location = match.NamedGroup("location").Value()
 		fantomExt = match.NamedGroup("fantomExt").Value()
 	}
-	lang.AssertState(!strings.HasSuffix(location, "/"), "Cannot load from location %s defined in %s. Directory import is not supported", location, resource.URL().Path)
-	importResource := e.resourceLoader.Resolve(location)
-	e.loadResource(lang.If(strings.HasPrefix(importResource.URL().Path, "/"), importResource, resource.CreateRelative("../"+location)), fantomExt)
+	location = filepath.ToSlash(location)
+	lang.AssertState(!strings.HasSuffix(location, "/"), "Cannot load from location %s defined in %s. Directory import is not supported", location, path)
+	e.loadFile(files.RelativePath(path, location), fantomExt)
 }
 
 func (e *Environment) envVarCanonicalForm(key string) string {
