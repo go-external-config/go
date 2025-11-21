@@ -2,6 +2,7 @@ package env_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/go-external-config/go/env"
 	"github.com/stretchr/testify/require"
@@ -59,6 +60,15 @@ func Test_ExprProcessor_Process_DummyExpression(t *testing.T) {
 		require.Equal(t, 4, processor.Process("#{ f(2, 2) }"))
 		require.Equal(t, "2 + 2 = 4", processor.Process("2 + 2 = #{ f(2, 2) }"))
 		require.Equal(t, []string{"dev", "test"}, processor.Process("#{split('dev,test', ',')}"))
+	})
+}
+
+func Test_ExprProcessor_Process_TimeConstants(t *testing.T) {
+	t.Run("should substitute variable", func(t *testing.T) {
+		processor := env.ExprProcessorOf(false)
+		require.Equal(t, 10*time.Millisecond, processor.Process("#{10 * time.Millisecond}"))
+		require.Equal(t, 2*time.Hour, processor.Process("#{2 * time.Hour}"))
+		require.Equal(t, 24*time.Hour, processor.Process("#{time.Day}"))
 	})
 }
 

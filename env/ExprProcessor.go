@@ -2,6 +2,7 @@ package env
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/expr-lang/expr"
 	"github.com/expr-lang/expr/compiler"
@@ -25,6 +26,15 @@ func ExprProcessorOf(strict bool) *ExprProcessor {
 		context:          make(map[string]any),
 		strict:           strict}
 	processor.OverrideResolve(processor.Resolve)
+	processor.context["time"] = map[string]any{
+		"Nanosecond":  time.Nanosecond,
+		"Microsecond": time.Microsecond,
+		"Millisecond": time.Millisecond,
+		"Second":      time.Second,
+		"Minute":      time.Minute,
+		"Hour":        time.Hour,
+		"Day":         24 * time.Hour,
+	}
 	return &processor
 }
 
