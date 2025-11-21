@@ -225,7 +225,7 @@ Encrypt password using public key:
 
 Enable RSA decryption in the code at the beginning of the main package:  
 
-	var environment = env.Instance().AddPropertySource(env.NewRsaPropertySource())
+	_ = env.Instance().WithPropertySource(env.NewRsaPropertySource())
 
 Safely commit encrypted property with the code at feature development time.
 

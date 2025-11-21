@@ -27,9 +27,7 @@ c:
         - sub1: "#{${a.key2} + ${ab.key1}}"
 `)
 		source.SetProperty("prop5", "#{3+2}")
-		env.SetActiveProfiles("")
-		environment := env.Instance()
-		environment.AddPropertySource(source)
+		environment := env.SetActiveProfiles("").WithPropertySource(source)
 
 		require.Equal(t, "value1", environment.Property("a.key1"))
 		require.Equal(t, "2.5", environment.Property("a.key2"))

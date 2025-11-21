@@ -9,17 +9,17 @@ import (
 
 func Test_Env_Value(t *testing.T) {
 	t.Run("should decode property", func(t *testing.T) {
-		env.SetActiveProfiles("")
-		env.Instance().AddPropertySource(env.MapPropertySourceOfMap("first loaded", map[string]string{
-			"key": "value1"}))
-		env.Instance().AddPropertySource(env.MapPropertySourceOfMap("second loaded", map[string]string{
-			"key": "value2"}))
-		env.Instance().AddPropertySource(env.MapPropertySourceOfMap("third loaded", map[string]string{
-			"key":     "value3",
-			"int":     "123",
-			"intExpr": "#{123}",
-			"servers": "host1,host2,host3",
-			"slice":   "#{split('prod,live', ',')}"}))
+		env.SetActiveProfiles("").
+			WithPropertySource(env.MapPropertySourceOfMap("first loaded", map[string]string{
+				"key": "value1"})).
+			WithPropertySource(env.MapPropertySourceOfMap("second loaded", map[string]string{
+				"key": "value2"})).
+			WithPropertySource(env.MapPropertySourceOfMap("third loaded", map[string]string{
+				"key":     "value3",
+				"int":     "123",
+				"intExpr": "#{123}",
+				"servers": "host1,host2,host3",
+				"slice":   "#{split('prod,live', ',')}"}))
 
 		// last wins
 		require.Equal(t, "value3", env.Value[string]("${key}"))
@@ -43,13 +43,13 @@ func Test_Env_Value(t *testing.T) {
 
 func Test_Env_ConfigurationProperties(t *testing.T) {
 	t.Run("should decode property", func(t *testing.T) {
-		env.SetActiveProfiles("")
-		env.Instance().AddPropertySource(env.MapPropertySourceOfMap("properties", map[string]string{
-			"key":      "value",
-			"db.alias": "alias",
-			"db.host":  "localhost",
-			"db.port1": "111",
-			"db.port3": "333"}))
+		env.SetActiveProfiles("").
+			WithPropertySource(env.MapPropertySourceOfMap("properties", map[string]string{
+				"key":      "value",
+				"db.alias": "alias",
+				"db.host":  "localhost",
+				"db.port1": "111",
+				"db.port3": "333"}))
 
 		type Port int
 		var db struct {

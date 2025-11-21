@@ -77,7 +77,7 @@ func SetActiveProfiles(profiles string) *Environment {
 	if previous != nil {
 		for _, source := range previous.propertySources {
 			if source.Properties() == nil {
-				environment.AddPropertySource(source)
+				environment.WithPropertySource(source)
 			}
 		}
 	}

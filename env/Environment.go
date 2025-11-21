@@ -43,8 +43,8 @@ func newEnvironment(activeProfiles string) *Environment {
 	environment.loadEnvironmentVariables()
 	environment.loadApplicationParameters()
 	environment.loadApplicationConfiguration(activeProfiles)
-	environment.AddPropertySource(NewRandomValuePropertySource())
-	environment.AddPropertySource(NewBase64PropertySource(&environment))
+	environment.WithPropertySource(NewRandomValuePropertySource())
+	environment.WithPropertySource(NewBase64PropertySource(&environment))
 	return &environment
 }
 
@@ -124,7 +124,7 @@ func (e *Environment) PropertySources() []PropertySource {
 	return collection.ReverseSlice(e.propertySources)
 }
 
-// ACTIVE_PROFILES=dev,hsqldb
+// PROFILES_ACTIVE=dev,hsqldb
 func (e *Environment) loadEnvironmentVariables() {
 	environ := MapPropertySourceOf("Environment variables")
 	pattern := regexp.MustCompile(`(?P<key>[^=\s]+)=(?P<value>.*)`)
@@ -137,7 +137,7 @@ func (e *Environment) loadEnvironmentVariables() {
 	e.environPropertySource = environ
 }
 
-// --active.profiles=dev,hsqldb
+// --profiles.active=dev,hsqldb
 func (e *Environment) loadApplicationParameters() {
 	params := MapPropertySourceOf("Application parameters")
 	pattern := regexp.MustCompile(`--?(?P<key>[^=\s]+)\s*=?(?P<value>.*)`)
@@ -243,8 +243,8 @@ func (e *Environment) envVarCanonicalForm(key string) string {
 // Add custom property source to implement additional logic for properties processing, like property=base64:dGVzdAo=.
 // See Base64PropertySource (available by default) and RsaPropertySource
 //
-//	var environment = env.Instance().AddPropertySource(env.NewRsaPropertySource())
-func (e *Environment) AddPropertySource(source PropertySource) *Environment {
+//	_ = env.Instance().WithPropertySource(env.NewRsaPropertySource())
+func (e *Environment) WithPropertySource(source PropertySource) *Environment {
 	e.propertySources = append(e.propertySources, source)
 	return e
 }

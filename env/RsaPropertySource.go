@@ -19,7 +19,7 @@ import (
 //
 // Initialize at the beginning of the main package:
 //
-//	var environment = env.Instance().AddPropertySource(env.NewRsaPropertySource())
+//	_ = env.Instance().WithPropertySource(env.NewRsaPropertySource())
 //
 // Provide rsa.privateKey.path property to a PEM file to decrypt properties on a target environment.
 //
