@@ -2,6 +2,7 @@ package env_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/go-external-config/go/env"
 	"github.com/stretchr/testify/require"
@@ -15,11 +16,15 @@ func Test_Env_Value(t *testing.T) {
 			WithPropertySource(env.MapPropertySourceOfMap("second loaded", map[string]string{
 				"key": "value2"})).
 			WithPropertySource(env.MapPropertySourceOfMap("third loaded", map[string]string{
-				"key":     "value3",
-				"int":     "123",
-				"intExpr": "#{123}",
-				"servers": "host1,host2,host3",
-				"slice":   "#{split('prod,live', ',')}"}))
+				"key":            "value3",
+				"int":            "123",
+				"intExpr":        "#{123}",
+				"servers":        "host1,host2,host3",
+				"slice":          "#{split('prod,live', ',')}",
+				"time":           "#{5 * time.Second}",
+				"size":           "#{5 * size.MB}",
+				"threadPoolSize": "#{20 * runtime.NumCPU}",
+			}))
 
 		// last wins
 		require.Equal(t, "value3", env.Value[string]("${key}"))
@@ -38,6 +43,8 @@ func Test_Env_Value(t *testing.T) {
 		require.Equal(t, "[prod live]", env.Value[string]("${slice}"))
 		type Port int
 		require.Equal(t, Port(123), env.Value[Port]("${intExpr}"))
+		require.Equal(t, 5*time.Second, env.Value[time.Duration]("${time}"))
+		require.Equal(t, 5*1024*1024, env.Value[int]("${size}"))
 	})
 }
 

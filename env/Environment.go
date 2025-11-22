@@ -243,8 +243,19 @@ func (e *Environment) envVarCanonicalForm(key string) string {
 // Add custom property source to implement additional logic for properties processing, like property=base64:dGVzdAo=.
 // See Base64PropertySource (available by default) and RsaPropertySource
 //
-//	_ = env.Instance().WithPropertySource(env.NewRsaPropertySource())
+//	var _ = env.Instance().WithPropertySource(env.NewRsaPropertySource())
 func (e *Environment) WithPropertySource(source PropertySource) *Environment {
 	e.propertySources = append(e.propertySources, source)
+	return e
+}
+
+// Add custom context variables to be evaluated.
+// See env.ExprProcessor for expressions and variables available by default.
+//
+//	var _ = env.Instance().WithContextVariable("runtime", map[string]any{
+//		"NumCPU": runtime.NumCPU(),
+//	})
+func (e *Environment) WithContextVariable(key string, value any) *Environment {
+	e.exprProcessor.Define(key, value)
 	return e
 }

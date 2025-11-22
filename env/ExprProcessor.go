@@ -2,6 +2,7 @@ package env
 
 import (
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/expr-lang/expr"
@@ -14,6 +15,7 @@ import (
 	"github.com/go-external-config/go/util/text"
 )
 
+// See expr-lang: https://expr-lang.org/docs/language-definition
 type ExprProcessor struct {
 	text.PatternProcessor
 	context map[string]any
@@ -34,6 +36,16 @@ func ExprProcessorOf(strict bool) *ExprProcessor {
 		"Minute":      time.Minute,
 		"Hour":        time.Hour,
 		"Day":         24 * time.Hour,
+		"Week":        7 * 24 * time.Hour,
+	}
+	processor.context["size"] = map[string]any{
+		"KB": 1024,
+		"MB": 1024 * 1024,
+		"GB": 1024 * 1024 * 1024,
+		"TB": 1024 * 1024 * 1024 * 1024,
+	}
+	processor.context["runtime"] = map[string]any{
+		"NumCPU": runtime.NumCPU(),
 	}
 	return &processor
 }
