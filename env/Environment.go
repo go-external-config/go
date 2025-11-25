@@ -154,7 +154,7 @@ func (e *Environment) loadApplicationParameters() {
 // application.yaml
 // application-<profile>.yaml
 func (e *Environment) loadApplicationConfiguration(bootstrapProfiles string) {
-	activeProfiles := lang.FirstNonEmpty(e.paramsPropertySource.properties["profiles.active"], e.environPropertySource.properties["PROFILES_ACTIVE"], bootstrapProfiles)
+	activeProfiles := lang.FirstNonEmpty(bootstrapProfiles, e.paramsPropertySource.properties["profiles.active"], e.environPropertySource.properties["PROFILES_ACTIVE"])
 	e.activeProfiles = lang.If(len(activeProfiles) == 0, e.activeProfiles, append(e.activeProfiles, strings.Split(activeProfiles, ",")...))
 	configName := lang.FirstNonEmpty(e.paramsPropertySource.properties["config.name"], e.environPropertySource.properties["CONFIG_NAME"], "application")
 	defaultLocation := "./,./config/"
