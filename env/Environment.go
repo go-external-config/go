@@ -3,7 +3,6 @@ package env
 import (
 	"fmt"
 	"io"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -199,7 +198,7 @@ func (e *Environment) loadFile(path, fantomExt string) {
 		return
 	}
 	var result PropertySource
-	slog.Info(fmt.Sprintf("%T: loading properties from %s", *e, path))
+	fmt.Printf("loading properties from %s\n", path)
 	ext := lang.FirstNonEmpty(fantomExt, filepath.Ext(path))
 	lang.AssertState(len(ext) != 0, "Cannot load from location %s. If location supposed to be a directory use '/' at the end. Otherwise provide extension hint in square brackets like [.properties] to derive property source type", path)
 	file := optional.OfCommaErr(os.Open(path)).OrElsePanic("Cannot open file %s", path)

@@ -74,7 +74,7 @@ func (p *ExprProcessor) Resolve(match *regex.Match,
 		expression := lang.FirstNonEmpty(match.NamedGroup("expr").OrElse(""), match.NamedGroup("complex").OrElse(""))
 		resolved = optional.OfNilable(p.eval(expression, p.context)).OrElsePanic("Cannot evaluate expression %s", match.Expr())
 	}
-	// slog.Debug(fmt.Sprintf("ExprProcessor: %s -> %s\n", match.Expr(), resolved))
+	// fmt.Printf("ExprProcessor: %s -> %s\n", match.Expr(), resolved)
 	return resolved
 }
 
