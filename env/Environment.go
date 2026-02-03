@@ -7,9 +7,11 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/go-external-config/go/lang"
 	"github.com/go-external-config/go/util/collection"
+	"github.com/go-external-config/go/util/concurrent"
 	"github.com/go-external-config/go/util/files"
 	"github.com/go-external-config/go/util/optional"
 	"github.com/go-external-config/go/util/regex"
@@ -25,12 +27,26 @@ var envVarCanonicalFormTranslationRule = map[rune]rune{
 	'-': 0, // delete
 }
 
+var environment *Environment
+var environmentMu sync.Mutex
+
 type Environment struct {
 	activeProfiles        []string
 	paramsPropertySource  *MapPropertySource
 	environPropertySource *MapPropertySource
 	propertySources       []PropertySource
 	exprProcessor         *ExprProcessor
+}
+
+func Instance() *Environment {
+	if environment == nil {
+		concurrent.Synchronized(&environmentMu, func() {
+			if environment == nil {
+				environment = newEnvironment("")
+			}
+		})
+	}
+	return environment
 }
 
 func newEnvironment(activeProfiles string) *Environment {

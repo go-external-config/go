@@ -8,10 +8,9 @@ import (
 	"unsafe"
 
 	"github.com/go-external-config/go/lang"
+	"github.com/go-external-config/go/util/concurrent"
 	"github.com/go-external-config/go/util/str"
 )
-
-var environment *Environment
 
 // Expression to evaluate against environment properties
 //
@@ -66,29 +65,26 @@ func MatchesProfiles(profiles ...string) bool {
 // Do nothing if very profiles are already set in the specified order.
 // Reload environment if empty value provided
 func SetActiveProfiles(profiles string) *Environment {
-	if environment != nil && "default,"+profiles == strings.Join(environment.ActiveProfiles(), ",") {
-		return environment
-	}
+	var result *Environment
+	concurrent.Synchronized(&environmentMu, func() {
+		if environment != nil && "default,"+profiles == strings.Join(environment.ActiveProfiles(), ",") {
+			result = environment
+		}
 
-	previous := environment
-	environment = newEnvironment(profiles)
+		previous := environment
+		environment = newEnvironment(profiles)
 
-	// keep custom property preprocessors
-	if previous != nil {
-		for _, source := range previous.propertySources {
-			if source.Properties() == nil {
-				environment.WithPropertySource(source)
+		// keep custom property preprocessors
+		if previous != nil {
+			for _, source := range previous.propertySources {
+				if source.Properties() == nil {
+					environment.WithPropertySource(source)
+				}
 			}
 		}
-	}
-	return environment
-}
-
-func Instance() *Environment {
-	if environment == nil {
-		environment = newEnvironment("")
-	}
-	return environment
+		result = environment
+	})
+	return result
 }
 
 func convertAs[T any](value any) T {
