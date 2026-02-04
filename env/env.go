@@ -69,6 +69,7 @@ func SetActiveProfiles(profiles string) *Environment {
 	concurrent.Synchronized(&environmentMu, func() {
 		if environment != nil && "default,"+profiles == strings.Join(environment.ActiveProfiles(), ",") {
 			result = environment
+			return
 		}
 
 		previous := environment
