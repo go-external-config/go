@@ -9,7 +9,7 @@ import (
 /*
 	Recover must be used with defer.
 
-Prints unhandled error stack trace into stderr by default.
+	Prints unhandled error stack trace into stderr by default.
 */
 func Recover(handler ...func(any)) {
 	if err := recover(); err != nil {

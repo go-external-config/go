@@ -23,7 +23,7 @@ func SubtractSlice[T comparable](a, b []T) []T {
 }
 
 // new reverced slice
-func ReverseSlice[T comparable](slice []T) []T {
+func ReverseSlice[T any](slice []T) []T {
 	reversedSlice := make([]T, len(slice))
 	copy(reversedSlice, slice)
 	slices.Reverse(reversedSlice)
