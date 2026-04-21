@@ -16,7 +16,7 @@ import (
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-var keyPattern = regexp.MustCompile(`^random\.((?P<uuid>uuid)|(?P<string>string)\((?P<size>\d+)\)|(?P<value>value)(\((?P<bytes>\d+)\))?|(?P<int>int)(\((?P<max>\d+)\))?|(?P<int>int)(\((?P<min>-?\d+),(?P<max>\d+)\))?|(?P<int64>int64)(\((?P<max>\d+)\))?|(?P<int64>int64)(\((?P<min>-?\d+),(?P<max>\d+)\))?)$`)
+var keyPattern = regexp.MustCompile(regex.NewPatternBuilder().Next(`^random\.({uuid:uuid}|{string:string}\({size:\d+}\)|{value:value}(\({bytes:\d+}\))?|{int:int}(\({max:\d+}\))?|{int:int}(\({min:-?\d+},{max:\d+}\))?|{int64:int64}(\({max:\d+}\))?|{int64:int64}(\({min:-?\d+},{max:\d+}\))?)$`).Build())
 
 // Custom property source as an additional logic for properties processing, like property=${random.uuid}
 //

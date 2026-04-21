@@ -12,19 +12,18 @@ import (
 	"github.com/go-external-config/go/lang"
 	"github.com/go-external-config/go/util/optional"
 	"github.com/go-external-config/go/util/regex"
-	"github.com/go-external-config/go/util/text"
 )
 
 // See expr-lang: https://expr-lang.org/docs/language-definition
 type ExprProcessor struct {
-	text.PatternProcessor
+	regex.PatternProcessor
 	context map[string]any
 	strict  bool
 }
 
 func ExprProcessorOf(strict bool) *ExprProcessor {
 	processor := ExprProcessor{
-		PatternProcessor: *text.PatternProcessorOf(`\#\#\#\{(?P<complex>([^\$#]\{|[^\{])*?)\}\#\#\#|\#\{(?P<expr>([^\$#]\{|[^\{])*?)\}|\$\{(?P<prop>([^\$#:]\{|[^\{\}:])*)(:(?P<defaultValue>([^\$#]\{|[^\{])*?))?\}`),
+		PatternProcessor: *regex.PatternProcessorOf(`\#\#\#\{(?P<complex>([^\$#]\{|[^\{])*?)\}\#\#\#|\#\{(?P<expr>([^\$#]\{|[^\{])*?)\}|\$\{(?P<prop>([^\$#:]\{|[^\{\}:])*)(:(?P<defaultValue>([^\$#]\{|[^\{])*?))?\}`),
 		context:          make(map[string]any),
 		strict:           strict}
 	processor.OverrideResolve(processor.Resolve)

@@ -16,10 +16,9 @@ import (
 	"github.com/go-external-config/go/util/optional"
 	"github.com/go-external-config/go/util/regex"
 	"github.com/go-external-config/go/util/str"
-	"github.com/go-external-config/go/util/text"
 )
 
-var locationPattern = regexp.MustCompile(`(?P<location>.+)\[(?P<fantomExt>\.[\w]+)\]`)
+var locationPattern = regexp.MustCompile(regex.NewPatternBuilder().Next(`{location:.+}\[{fantomExt:\.[\w]+}\]`).Build())
 var envVarCanonicalFormTranslationRule = map[rune]rune{
 	'.': '_',
 	'[': '_',
@@ -99,7 +98,7 @@ func (e *Environment) MatchesProfiles(profiles ...string) bool {
 		return true
 	}
 	activeProfiles := collection.SliceToSet(e.activeProfiles)
-	processor := text.PatternProcessorOf("(?P<word>\\w+)|(?P<sign>\\W)")
+	processor := regex.PatternProcessorOf(regex.NewPatternBuilder().Next("{word:\\w+}|{sign:\\W}").Build())
 	processor.OverrideResolve(func(match *regex.Match,
 		super func(*regex.Match) any) any {
 		word := match.NamedGroup("word")
@@ -142,7 +141,7 @@ func (e *Environment) PropertySources() []PropertySource {
 // PROFILES_ACTIVE=dev,hsqldb
 func (e *Environment) loadEnvironmentVariables() {
 	environ := MapPropertySourceOf("Environment variables")
-	pattern := regexp.MustCompile(`(?P<key>[^=\s]+)=(?P<value>.*)`)
+	pattern := regexp.MustCompile(regex.NewPatternBuilder().Next(`{key:[^=\s]+}={value:.*}`).Build())
 	for _, keyValue := range os.Environ() {
 		for _, m := range pattern.FindAllStringSubmatchIndex(keyValue, -1) {
 			match := regex.MatchOf(pattern, keyValue, m)
@@ -155,7 +154,7 @@ func (e *Environment) loadEnvironmentVariables() {
 // --profiles.active=dev,hsqldb
 func (e *Environment) loadApplicationParameters() {
 	params := MapPropertySourceOf("Application parameters")
-	pattern := regexp.MustCompile(`--?(?P<key>[^=\s]+)\s*=?(?P<value>.*)`)
+	pattern := regexp.MustCompile(regex.NewPatternBuilder().Next(`--?{key:[^=\s]+}\s*=?{value:.*}`).Build())
 	for _, keyValue := range os.Args[1:] {
 		for _, m := range pattern.FindAllStringSubmatchIndex(keyValue, -1) {
 			match := regex.MatchOf(pattern, keyValue, m)

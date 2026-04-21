@@ -1,16 +1,15 @@
-package text_test
+package regex_test
 
 import (
 	"testing"
 
 	"github.com/go-external-config/go/util/regex"
-	"github.com/go-external-config/go/util/text"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_PatternProcessor_Process(t *testing.T) {
 	t.Run("should substitute 'World'", func(t *testing.T) {
-		processor := text.PatternProcessorOf("\\w+")
+		processor := regex.PatternProcessorOf("\\w+")
 		processor.OverrideResolve(func(match *regex.Match,
 			super func(*regex.Match) any) any {
 
