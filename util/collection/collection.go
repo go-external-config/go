@@ -1,6 +1,9 @@
 package collection
 
-import "slices"
+import (
+	"cmp"
+	"slices"
+)
 
 func SliceToSet[T comparable](slice []T) map[T]any {
 	result := make(map[T]any)
@@ -28,4 +31,24 @@ func ReverseSlice[T any](slice []T) []T {
 	copy(reversedSlice, slice)
 	slices.Reverse(reversedSlice)
 	return reversedSlice
+}
+
+// the same sorted slice
+func Sort[T cmp.Ordered](slice []T) []T {
+	slices.Sort(slice)
+	return slice
+}
+
+func Distinct[T comparable](slice []T) []T {
+	seen := make(map[T]struct{}, len(slice))
+	out := make([]T, 0, len(slice))
+
+	for _, v := range slice {
+		if _, ok := seen[v]; ok {
+			continue
+		}
+		seen[v] = struct{}{}
+		out = append(out, v)
+	}
+	return out
 }

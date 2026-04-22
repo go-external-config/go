@@ -21,3 +21,17 @@ func Test_Collection_ReverseSlice(t *testing.T) {
 		require.Equal(t, []int{5, 4, 3, 2, 1}, collection.ReverseSlice(a))
 	})
 }
+
+func TestCollectionSort(t *testing.T) {
+	t.Run("should produce sane results'", func(t *testing.T) {
+		a := []int{1, 3, 5, 2, 4}
+		require.Equal(t, []int{1, 2, 3, 4, 5}, collection.Sort(a))
+	})
+}
+
+func TestCollectionDistinct(t *testing.T) {
+	t.Run("should produce sane results'", func(t *testing.T) {
+		a := []int{1, 2, 2, 3, 4, 5, 2, 4, 3}
+		require.Equal(t, []int{1, 2, 3, 4, 5}, collection.Distinct(a))
+	})
+}
