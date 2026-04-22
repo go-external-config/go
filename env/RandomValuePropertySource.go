@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-errr/go/err"
 	"github.com/go-external-config/go/lang"
 	"github.com/go-external-config/go/util/optional"
 	"github.com/go-external-config/go/util/regex"
@@ -43,30 +44,30 @@ func NewRandomValuePropertySource() *RandomValuePropertySource {
 	return &RandomValuePropertySource{}
 }
 
-func (s *RandomValuePropertySource) Name() string {
+func (this *RandomValuePropertySource) Name() string {
 	return "RandomValuePropertySource"
 }
 
-func (s *RandomValuePropertySource) HasProperty(key string) bool {
+func (this *RandomValuePropertySource) HasProperty(key string) bool {
 	return strings.HasPrefix(key, "random.")
 }
 
-func (s *RandomValuePropertySource) Property(key string) string {
+func (this *RandomValuePropertySource) Property(key string) string {
 	for _, m := range keyPattern.FindAllStringSubmatchIndex(key, -1) {
 		match := regex.MatchOf(keyPattern, key, m)
 		uuid := match.NamedGroup("uuid")
 		if uuid.Present() {
-			return s.RandomUuid()
+			return this.RandomUuid()
 		}
 		str := match.NamedGroup("string")
 		if str.Present() {
 			size := optional.OfCommaErr(strconv.Atoi(match.NamedGroup("size").Value())).OrElsePanic("Cannot parse size %s", match.Expr())
-			return s.RandomString(size)
+			return this.RandomString(size)
 		}
 		value := match.NamedGroup("value")
 		if value.Present() {
 			bytes := optional.OfCommaErr(strconv.Atoi(match.NamedGroup("bytes").OrElse("8"))).OrElsePanic("Cannot parse bytes %s", match.Expr())
-			return s.RandomValue(bytes)
+			return this.RandomValue(bytes)
 		}
 		intValue := match.NamedGroup("int")
 		if intValue.Present() {
@@ -74,9 +75,9 @@ func (s *RandomValuePropertySource) Property(key string) string {
 			if max.Present() {
 				min := optional.OfCommaErr(strconv.ParseInt(match.NamedGroup("min").OrElse("0"), 10, 32)).OrElsePanic("Cannot parse min %s", match.Expr())
 				max := optional.OfCommaErr(strconv.ParseInt(max.Value(), 10, 32)).OrElsePanic("Cannot parse max %s", match.Expr())
-				return fmt.Sprint(int32(s.RandomInt64Value(int64(min), int64(max))))
+				return fmt.Sprint(int32(this.RandomInt64Value(int64(min), int64(max))))
 			} else {
-				return fmt.Sprint(int32(s.RandomInt64Value(int64(math.MinInt), int64(math.MaxInt))))
+				return fmt.Sprint(int32(this.RandomInt64Value(int64(math.MinInt), int64(math.MaxInt))))
 			}
 		}
 		int64Value := match.NamedGroup("int64")
@@ -85,16 +86,16 @@ func (s *RandomValuePropertySource) Property(key string) string {
 			if max.Present() {
 				min := optional.OfCommaErr(strconv.ParseInt(match.NamedGroup("min").OrElse("0"), 10, 64)).OrElsePanic("Cannot parse min %s", match.Expr())
 				max := optional.OfCommaErr(strconv.ParseInt(max.Value(), 10, 64)).OrElsePanic("Cannot parse max %s", match.Expr())
-				return fmt.Sprint(s.RandomInt64Value(min, max))
+				return fmt.Sprint(this.RandomInt64Value(min, max))
 			} else {
-				return fmt.Sprint(s.RandomInt64Value(math.MinInt64, math.MaxInt64))
+				return fmt.Sprint(this.RandomInt64Value(math.MinInt64, math.MaxInt64))
 			}
 		}
 	}
-	panic("Cannot process " + key)
+	panic(err.NewRuntimeException("Cannot process " + key))
 }
 
-func (s *RandomValuePropertySource) RandomUuid() string {
+func (this *RandomValuePropertySource) RandomUuid() string {
 	u := make([]byte, 16)
 	optional.OfCommaErr(rand.Read(u)).OrElsePanic("Cannot generate random value")
 	// Set version (4) and variant bits per RFC 4122
@@ -104,20 +105,20 @@ func (s *RandomValuePropertySource) RandomUuid() string {
 	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x", u[0:4], u[4:6], u[6:8], u[8:10], u[10:16])
 }
 
-func (s *RandomValuePropertySource) RandomValue(bytes int) string {
+func (this *RandomValuePropertySource) RandomValue(bytes int) string {
 	buf := make([]byte, bytes)
 	optional.OfCommaErr(rand.Read(buf)).OrElsePanic("Cannot generate random value")
 	return fmt.Sprintf("%x", buf)
 }
 
-func (s *RandomValuePropertySource) RandomInt64Value(minInclusive, maxExclusive int64) int64 {
+func (this *RandomValuePropertySource) RandomInt64Value(minInclusive, maxExclusive int64) int64 {
 	lang.AssertState(maxExclusive > minInclusive, "Invalid range, [%d, %d)", minInclusive, maxExclusive)
 	rng := new(big.Int).Sub(big.NewInt(maxExclusive), big.NewInt(minInclusive))
 	n := optional.OfCommaErr(rand.Int(rand.Reader, rng)).OrElsePanic("Cannot generate random value")
 	return n.Int64() + minInclusive
 }
 
-func (s *RandomValuePropertySource) RandomString(length int) string {
+func (this *RandomValuePropertySource) RandomString(length int) string {
 	bytes := make([]byte, length)
 	optional.OfCommaErr(rand.Read(bytes)).OrElsePanic("Cannot generate random value")
 	// Map random bytes to allowed characters
@@ -127,6 +128,6 @@ func (s *RandomValuePropertySource) RandomString(length int) string {
 	return string(bytes)
 }
 
-func (s *RandomValuePropertySource) Properties() map[string]string {
+func (this *RandomValuePropertySource) Properties() map[string]string {
 	return nil
 }

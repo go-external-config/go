@@ -3,6 +3,7 @@ package optional
 import (
 	"fmt"
 
+	"github.com/go-errr/go/err"
 	"github.com/go-external-config/go/lang"
 )
 
@@ -52,32 +53,32 @@ func OfEntry[K comparable, V any](m map[K]V, key K) *Optional[V] {
 	return OfValue(value)
 }
 
-func (o *Optional[T]) Present() bool {
-	return o.present
+func (this *Optional[T]) Present() bool {
+	return this.present
 }
 
-func (o *Optional[T]) Value() T {
-	o.panicIfEmpty("No value present")
-	return o.value
+func (this *Optional[T]) Value() T {
+	this.panicIfEmpty("No value present")
+	return this.value
 }
 
-func (o *Optional[T]) OrElse(value T) T {
-	return lang.If(o.present, o.value, value)
+func (this *Optional[T]) OrElse(value T) T {
+	return lang.If(this.present, this.value, value)
 }
 
-func (o *Optional[T]) OrElseOptional(other *Optional[T]) *Optional[T] {
-	return lang.If(o.present, o, other)
+func (this *Optional[T]) OrElseOptional(other *Optional[T]) *Optional[T] {
+	return lang.If(this.present, this, other)
 }
 
-func (o *Optional[T]) OrElsePanic(format string, a ...any) T {
-	o.panicIfEmpty(format, a...)
-	return o.value
+func (this *Optional[T]) OrElsePanic(format string, a ...any) T {
+	this.panicIfEmpty(format, a...)
+	return this.value
 }
 
-func (o *Optional[T]) panicIfEmpty(format string, a ...any) {
-	if o.err != nil {
-		panic(fmt.Errorf("%s\nCaused by: %v", fmt.Sprintf(format, a...), o.err.Error()))
-	} else if !o.present {
-		panic(fmt.Sprintf(format, a...))
+func (this *Optional[T]) panicIfEmpty(format string, a ...any) {
+	if this.err != nil {
+		panic(err.NewRuntimeExceptionFrom(fmt.Sprintf(format, a...), this.err))
+	} else if !this.present {
+		panic(err.NewNoSuchElementException(fmt.Sprintf(format, a...)))
 	}
 }

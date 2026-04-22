@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/go-errr/go/err"
 	"github.com/go-external-config/go/lang"
 )
 
@@ -16,7 +17,7 @@ type PatternProcessor struct {
 func PatternProcessorOf(pattern string) *PatternProcessor {
 	return &PatternProcessor{
 		regexp:  regexp.MustCompile(lang.If(strings.HasPrefix(pattern, "(?"), pattern, "(?ms)"+pattern)),
-		resolve: func(*Match) any { panic("Not implemented") }}
+		resolve: func(*Match) any { panic(err.NewUnsupportedOperationException("Not implemented")) }}
 }
 
 func (this *PatternProcessor) Process(str string) any {

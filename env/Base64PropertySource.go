@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"strings"
 
+	"github.com/go-errr/go/err"
 	"github.com/go-external-config/go/util/optional"
 )
 
@@ -17,11 +18,11 @@ func NewBase64PropertySource(environment *Environment) *Base64PropertySource {
 		environment: environment}
 }
 
-func (s *Base64PropertySource) Name() string {
+func (this *Base64PropertySource) Name() string {
 	return "Base64PropertySource"
 }
 
-func (s *Base64PropertySource) HasProperty(key string) bool {
+func (this *Base64PropertySource) HasProperty(key string) bool {
 	for _, source := range environment.PropertySources() {
 		if source.Properties() != nil && source.HasProperty(key) {
 			return strings.HasPrefix(source.Property(key), "base64:")
@@ -30,7 +31,7 @@ func (s *Base64PropertySource) HasProperty(key string) bool {
 	return false
 }
 
-func (s *Base64PropertySource) Property(key string) string {
+func (this *Base64PropertySource) Property(key string) string {
 	for _, source := range environment.PropertySources() {
 		if source.Properties() != nil && source.HasProperty(key) {
 			value := source.Property(key)[7:]
@@ -38,9 +39,9 @@ func (s *Base64PropertySource) Property(key string) string {
 				OrElsePanic("Cannot decode %s=%s", key, value)), "\n\r")
 		}
 	}
-	panic("No value present for " + key)
+	panic(err.NewIllegalArgumentException("No value present for " + key))
 }
 
-func (s *Base64PropertySource) Properties() map[string]string {
+func (this *Base64PropertySource) Properties() map[string]string {
 	return nil
 }

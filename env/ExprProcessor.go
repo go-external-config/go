@@ -9,6 +9,7 @@ import (
 	"github.com/expr-lang/expr/compiler"
 	"github.com/expr-lang/expr/conf"
 	"github.com/expr-lang/expr/parser"
+	"github.com/go-errr/go/err"
 	"github.com/go-external-config/go/lang"
 	"github.com/go-external-config/go/util/optional"
 	"github.com/go-external-config/go/util/regex"
@@ -49,9 +50,9 @@ func ExprProcessorOf(strict bool) *ExprProcessor {
 	return &processor
 }
 
-func (p *ExprProcessor) Resolve(match *regex.Match,
+func (this *ExprProcessor) Resolve(match *regex.Match,
 	super func(*regex.Match) any) (resolved any) {
-	if !p.strict {
+	if !this.strict {
 		defer func() {
 			if recover() != nil {
 				resolved = match.Expr()
@@ -67,25 +68,25 @@ func (p *ExprProcessor) Resolve(match *regex.Match,
 		} else if defaultValue.Present() {
 			resolved = defaultValue.Value()
 		} else {
-			panic(fmt.Sprintf("Cannot resolve property %s", match.Expr()))
+			panic(err.NewRuntimeException(fmt.Sprintf("Cannot resolve property %s", match.Expr())))
 		}
 	} else {
 		expression := lang.FirstNonEmpty(match.NamedGroup("expr").OrElse(""), match.NamedGroup("complex").OrElse(""))
-		resolved = optional.OfNilable(p.eval(expression, p.context)).OrElsePanic("Cannot evaluate expression %s", match.Expr())
+		resolved = optional.OfNilable(this.eval(expression, this.context)).OrElsePanic("Cannot evaluate expression %s", match.Expr())
 	}
 	// fmt.Printf("ExprProcessor: %s -> %s\n", match.Expr(), resolved)
 	return resolved
 }
 
-func (p *ExprProcessor) Define(key string, value any) {
-	p.context[key] = value
+func (this *ExprProcessor) Define(key string, value any) {
+	this.context[key] = value
 }
 
-func (p *ExprProcessor) Reset() {
-	p.context = make(map[string]any)
+func (this *ExprProcessor) Reset() {
+	this.context = make(map[string]any)
 }
 
-func (p *ExprProcessor) eval(input string, env any) any {
+func (this *ExprProcessor) eval(input string, env any) any {
 	config := conf.CreateNew()
 	config.Strict = true
 	tree := optional.OfCommaErr(parser.Parse(input)).OrElsePanic("Cannot parse expression")
@@ -94,6 +95,6 @@ func (p *ExprProcessor) eval(input string, env any) any {
 	return output
 }
 
-func (p *ExprProcessor) SetStrict(strict bool) {
-	p.strict = strict
+func (this *ExprProcessor) SetStrict(strict bool) {
+	this.strict = strict
 }

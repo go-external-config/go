@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/go-errr/go/err"
 	"github.com/go-external-config/go/lang"
 	"github.com/go-external-config/go/util/optional"
 )
@@ -51,11 +52,11 @@ func NewRsaPropertySource() *RsaPropertySource {
 		environment: Instance()}
 }
 
-func (s *RsaPropertySource) Name() string {
+func (this *RsaPropertySource) Name() string {
 	return "RsaPropertySource"
 }
 
-func (s *RsaPropertySource) HasProperty(key string) bool {
+func (this *RsaPropertySource) HasProperty(key string) bool {
 	for _, source := range environment.PropertySources() {
 		if source.Properties() != nil && source.HasProperty(key) {
 			return strings.HasPrefix(source.Property(key), "RSA:")
@@ -64,7 +65,7 @@ func (s *RsaPropertySource) HasProperty(key string) bool {
 	return false
 }
 
-func (s *RsaPropertySource) Property(key string) string {
+func (this *RsaPropertySource) Property(key string) string {
 	for _, source := range environment.PropertySources() {
 		if source.Properties() != nil && source.HasProperty(key) {
 			value := source.Property(key)[4:]
@@ -72,7 +73,7 @@ func (s *RsaPropertySource) Property(key string) string {
 			return decryptWithPrivateKey(key, value, rsaPrivateKeyPath)
 		}
 	}
-	panic("No value present for " + key)
+	panic(err.NewIllegalArgumentException("No value present for " + key))
 }
 
 func decryptWithPrivateKey(key, value, privateKeyPath string) string {
@@ -87,13 +88,13 @@ func decryptWithPrivateKey(key, value, privateKeyPath string) string {
 	case "PRIVATE KEY":
 		priv = optional.OfCommaErr(x509.ParsePKCS8PrivateKey(block.Bytes)).OrElsePanic("Cannot parse private key from %s", privateKeyPath).(*rsa.PrivateKey)
 	default:
-		panic(fmt.Sprintf("Unsupported key type %s", block.Type))
+		panic(err.NewIllegalArgumentException(fmt.Sprintf("Unsupported key type %s", block.Type)))
 	}
 	cipher, _ := base64.StdEncoding.DecodeString(value)
 	decrypted := optional.OfCommaErr(rsa.DecryptOAEP(sha256.New(), rand.Reader, priv, cipher, nil)).OrElsePanic("Cannot decrypt %s=%s", key, value)
 	return string(decrypted)
 }
 
-func (s *RsaPropertySource) Properties() map[string]string {
+func (this *RsaPropertySource) Properties() map[string]string {
 	return nil
 }

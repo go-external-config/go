@@ -10,8 +10,8 @@ import (
 )
 
 func Exists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
+	_, e := os.Stat(path)
+	return e == nil
 }
 
 func RelativePath(path1, path2 string) string {

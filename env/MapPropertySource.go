@@ -21,34 +21,34 @@ func MapPropertySourceOfMap(name string, source map[string]string) *MapPropertyS
 		properties: source}
 }
 
-func (s *MapPropertySource) Name() string {
-	return s.name
+func (this *MapPropertySource) Name() string {
+	return this.name
 }
 
-func (s *MapPropertySource) HasProperty(key string) bool {
-	_, ok := s.properties[key]
+func (this *MapPropertySource) HasProperty(key string) bool {
+	_, ok := this.properties[key]
 	return ok
 }
 
-func (s *MapPropertySource) Property(key string) string {
-	value, ok := s.properties[key]
-	lang.AssertState(ok, "%v has no %v", s.name, key)
+func (this *MapPropertySource) Property(key string) string {
+	value, ok := this.properties[key]
+	lang.AssertState(ok, "%v has no %v", this.name, key)
 	return value
 }
 
-func (s *MapPropertySource) SetProperty(key string, value string) {
-	s.properties[key] = value
+func (this *MapPropertySource) SetProperty(key string, value string) {
+	this.properties[key] = value
 }
 
-func (s *MapPropertySource) Properties() map[string]string {
-	return s.properties
+func (this *MapPropertySource) Properties() map[string]string {
+	return this.properties
 }
 
-func (s *MapPropertySource) SetProperties(properties map[string]string) {
-	s.properties = properties
+func (this *MapPropertySource) SetProperties(properties map[string]string) {
+	this.properties = properties
 }
 
-func (s *MapPropertySource) ContainsProperty(key string) bool {
-	_, ok := s.properties[key]
+func (this *MapPropertySource) ContainsProperty(key string) bool {
+	_, ok := this.properties[key]
 	return ok
 }

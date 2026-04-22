@@ -3,6 +3,8 @@ package lang
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/go-errr/go/err"
 )
 
 func If[T any](cond bool, v1, v2 T) T {
@@ -36,6 +38,6 @@ func FirstNonEmpty[T comparable](values ...T) T {
 
 func AssertState(expression bool, format string, args ...any) {
 	if !expression {
-		panic(fmt.Sprintf(format, args...))
+		panic(err.NewAssertionError(fmt.Sprintf(format, args...)))
 	}
 }

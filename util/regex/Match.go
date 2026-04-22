@@ -31,18 +31,18 @@ func MatchOf(regexp *regexp.Regexp, str string, matched []int) *Match {
 	return &result
 }
 
-func (m *Match) Expr() string {
-	return m.Group(0).Value()
+func (this *Match) Expr() string {
+	return this.Group(0).Value()
 }
 
-func (m *Match) GroupCount() int {
-	return len(m.subexpByIdx)
+func (this *Match) GroupCount() int {
+	return len(this.subexpByIdx)
 }
 
-func (m *Match) Group(idx int) *optional.Optional[string] {
-	return optional.OfEntry(m.subexpByIdx, idx)
+func (this *Match) Group(idx int) *optional.Optional[string] {
+	return optional.OfEntry(this.subexpByIdx, idx)
 }
 
-func (m *Match) NamedGroup(name string) *optional.Optional[string] {
-	return optional.OfEntry(m.subexpByName, name)
+func (this *Match) NamedGroup(name string) *optional.Optional[string] {
+	return optional.OfEntry(this.subexpByName, name)
 }
