@@ -8,12 +8,12 @@ import (
 	"unicode"
 
 	"github.com/go-errr/go/err"
+	"github.com/go-external-config/go/lang"
 	"github.com/go-external-config/go/util/optional"
 )
 
 func Parse[T any](value string) T {
-	var zero T
-	t := reflect.TypeOf(zero)
+	t := lang.TypeOf[T]()
 	return ParseOfType(value, t).(T)
 }
 

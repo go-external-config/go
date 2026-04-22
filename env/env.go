@@ -21,7 +21,7 @@ func Value[T any](expression string) T {
 }
 
 func ConfigurationProperties[T any](prefix string, target *T) *T {
-	targetType := reflect.TypeOf(*target)
+	targetType := reflect.TypeOf(target).Elem()
 	targetValue := reflect.ValueOf(target).Elem()
 	for i := 0; i < targetType.NumField(); i++ {
 		reflectField := targetType.Field(i)
@@ -89,8 +89,7 @@ func SetActiveProfiles(profiles string) *Environment {
 }
 
 func convertAs[T any](value any) T {
-	var zero T
-	return convertAsType(value, reflect.TypeOf(zero)).(T)
+	return convertAsType(value, lang.TypeOf[T]()).(T)
 }
 
 func convertAsType(value any, t reflect.Type) any {
