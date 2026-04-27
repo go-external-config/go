@@ -79,7 +79,7 @@ func (this *RsaPropertySource) Property(key string) string {
 func decryptWithPrivateKey(key, value, privateKeyPath string) string {
 	data, _ := os.ReadFile(privateKeyPath)
 	block, _ := pem.Decode(data)
-	lang.AssertState(block != nil, "No PEM block found in %s", privateKeyPath)
+	lang.Assert(block != nil, "No PEM block found in %s", privateKeyPath)
 
 	var priv *rsa.PrivateKey
 	switch block.Type {

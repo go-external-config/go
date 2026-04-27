@@ -216,7 +216,7 @@ func (this *Environment) loadFile(path, fantomExt string) {
 	var result PropertySource
 	fmt.Printf("loading properties from %s\n", path)
 	ext := lang.FirstNonEmpty(fantomExt, filepath.Ext(path))
-	lang.AssertState(len(ext) != 0, "Cannot load from location %s. If location supposed to be a directory use '/' at the end. Otherwise provide extension hint in square brackets like [.properties] to derive property source type", path)
+	lang.Assert(len(ext) != 0, "Cannot load from location %s. If location supposed to be a directory use '/' at the end. Otherwise provide extension hint in square brackets like [.properties] to derive property source type", path)
 	file := optional.OfCommaErr(os.Open(path)).OrElsePanic("Cannot open file %s", path)
 	defer file.Close()
 	content := string(optional.OfCommaErr(io.ReadAll(file)).OrElsePanic("Cannot read from %s", path))
@@ -247,7 +247,7 @@ func (this *Environment) loadImport(path, location string) {
 		fantomExt = match.NamedGroup("fantomExt").Value()
 	}
 	location = filepath.ToSlash(location)
-	lang.AssertState(!strings.HasSuffix(location, "/"), "Cannot load from location %s defined in %s. Directory import is not supported", location, path)
+	lang.Assert(!strings.HasSuffix(location, "/"), "Cannot load from location %s defined in %s. Directory import is not supported", location, path)
 	this.loadFile(files.RelativePath(path, location), fantomExt)
 }
 

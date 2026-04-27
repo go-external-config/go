@@ -36,7 +36,7 @@ func FirstNonEmpty[T comparable](values ...T) T {
 	return empty
 }
 
-func AssertState(expression bool, format string, args ...any) {
+func Assert(expression bool, format string, args ...any) {
 	if !expression {
 		panic(err.NewAssertionError(fmt.Sprintf(format, args...)))
 	}

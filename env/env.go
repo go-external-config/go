@@ -107,7 +107,7 @@ func convertAsType(value any, t reflect.Type) any {
 			return str.ParseOfType(v, t)
 		default:
 			val := reflect.ValueOf(value)
-			lang.AssertState(val.Type().ConvertibleTo(t), "Cannot convert %s %v to %v", val.Type().Name(), value, t.Name())
+			lang.Assert(val.Type().ConvertibleTo(t), "Cannot convert %s %v to %v", val.Type().Name(), value, t.Name())
 			return val.Convert(t).Interface()
 		}
 	}

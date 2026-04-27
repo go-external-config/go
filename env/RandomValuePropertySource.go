@@ -112,7 +112,7 @@ func (this *RandomValuePropertySource) RandomValue(bytes int) string {
 }
 
 func (this *RandomValuePropertySource) RandomInt64Value(minInclusive, maxExclusive int64) int64 {
-	lang.AssertState(maxExclusive > minInclusive, "Invalid range, [%d, %d)", minInclusive, maxExclusive)
+	lang.Assert(maxExclusive > minInclusive, "Invalid range, [%d, %d)", minInclusive, maxExclusive)
 	rng := new(big.Int).Sub(big.NewInt(maxExclusive), big.NewInt(minInclusive))
 	n := optional.OfCommaErr(rand.Int(rand.Reader, rng)).OrElsePanic("Cannot generate random value")
 	return n.Int64() + minInclusive

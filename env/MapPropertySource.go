@@ -32,7 +32,7 @@ func (this *MapPropertySource) HasProperty(key string) bool {
 
 func (this *MapPropertySource) Property(key string) string {
 	value, ok := this.properties[key]
-	lang.AssertState(ok, "%v has no %v", this.name, key)
+	lang.Assert(ok, "%v has no %v", this.name, key)
 	return value
 }
 

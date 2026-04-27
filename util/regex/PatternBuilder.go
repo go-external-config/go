@@ -14,7 +14,7 @@ type PatternBuilder struct {
 
 func NewPatternBuilder(mod ...string) *PatternBuilder {
 	this := &PatternBuilder{}
-	this.PatternProcessor = *PatternProcessorOf(`(?P<space>[ \t]+)|(?P<preffix>[^\\])?\{(?P<param>.*?)(?P<suffix>[^\\]|\{\d+,?\d*[^\d])?\}`)
+	this.PatternProcessor = *PatternProcessorOf(`(?P<space>[ \t]+)|(?P<prefix>[^\\])?\{(?P<param>.*?)(?P<suffix>[^\\]|\{\d+,?\d*[^\d])?\}`)
 	this.OverrideResolve(this.resolve)
 	mod = append(mod, "(?ms)")
 	this.buf.WriteString(mod[0])
@@ -54,7 +54,7 @@ func (this *PatternBuilder) resolve(match *Match, super func(*Match) any) any {
 		return `[ \t]+`
 	}
 
-	preffix := match.NamedGroup("preffix")
+	prefix := match.NamedGroup("prefix")
 	param := match.NamedGroup("param")
 	suffix := match.NamedGroup("suffix")
 	paramStr := param.Value() + suffix.OrElse("")
@@ -65,5 +65,5 @@ func (this *PatternBuilder) resolve(match *Match, super func(*Match) any) any {
 		paramStr = paramStr[:regexIdx]
 	}
 
-	return fmt.Sprintf(`%s(?P<%s>%s)`, preffix.OrElse(""), paramStr, lang.If(paramRegex == "", ".+?", paramRegex))
+	return fmt.Sprintf(`%s(?P<%s>%s)`, prefix.OrElse(""), paramStr, lang.If(paramRegex == "", ".+?", paramRegex))
 }
