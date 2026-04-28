@@ -335,4 +335,5 @@ go get github.com/go-external-config/go
 
 [github.com/go-external-config/aws](https://github.com/go-external-config/aws)  
 [github.com/go-external-config/vault](https://github.com/go-external-config/vault)  
+[github.com/go-external-config/consul](https://github.com/go-external-config/consul)  
 [github.com/go-beans/go](https://github.com/go-beans/go)
