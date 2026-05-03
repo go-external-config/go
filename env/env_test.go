@@ -77,6 +77,37 @@ func Test_Env_ConfigurationProperties(t *testing.T) {
 	})
 }
 
+func Test_Env_BindProperties(t *testing.T) {
+	t.Run("should inject tagged values", func(t *testing.T) {
+		env.SetActiveProfiles("").
+			WithPropertySource(env.MapPropertySourceOfMap("properties", map[string]string{
+				"key":      "value",
+				"db.alias": "alias",
+				"db.host":  "localhost",
+				"db.port1": "111",
+				"db.port3": "333",
+			}))
+
+		type Port int
+		var db struct {
+			Host  string `value:"${db.host}"`
+			host  string `value:"${db.host}"`
+			port1 int    `value:"${db.port1}"`
+			port2 int    `value:"${db.port2:0}"`
+			port3 Port   `value:"${db.port3}"`
+		}
+
+		actual := env.BindProperties(&db)
+
+		require.Same(t, &db, actual)
+		require.Equal(t, "localhost", db.Host)
+		require.Equal(t, "localhost", db.host)
+		require.Equal(t, 111, db.port1)
+		require.Equal(t, 0, db.port2)
+		require.Equal(t, Port(333), db.port3)
+	})
+}
+
 func Test_Env_MatchesProfiles(t *testing.T) {
 	t.Run("should match profiles properly", func(t *testing.T) {
 		env.SetActiveProfiles("test,hsqldb")

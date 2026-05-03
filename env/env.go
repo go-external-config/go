@@ -9,8 +9,11 @@ import (
 
 	"github.com/go-external-config/go/lang"
 	"github.com/go-external-config/go/util/concurrent"
+	"github.com/go-external-config/go/util/reflects"
 	"github.com/go-external-config/go/util/str"
 )
+
+const ValueTag = "value"
 
 // Expression to evaluate against environment properties
 //
@@ -20,6 +23,7 @@ func Value[T any](expression string) T {
 	return convertAs[T](Instance().ResolveRequiredPlaceholders(expression))
 }
 
+// Binds properties with the given prefix to the target struct using field names
 func ConfigurationProperties[T any](prefix string, target *T) *T {
 	targetType := reflect.TypeOf(target).Elem()
 	targetValue := reflect.ValueOf(target).Elem()
@@ -44,6 +48,23 @@ func ConfigurationProperties[T any](prefix string, target *T) *T {
 			settableField.Set(reflect.ValueOf(converted))
 		}
 	}
+	return target
+}
+
+// Binds properties to the target struct using field tags.
+func BindProperties[T any](target *T) *T {
+	BindPropertiesAny(target)
+	return target
+}
+
+// Binds properties to the target struct using field tags.
+func BindPropertiesAny(target any) any {
+	reflects.ForEachTaggedField(target, ValueTag, func(field reflects.Field) {
+		value := Instance().ResolveRequiredPlaceholders(field.TagValue)
+		converted := convertAsType(value, field.Type)
+		field.Value.Set(reflect.ValueOf(converted))
+	})
+
 	return target
 }
 

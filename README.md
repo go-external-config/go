@@ -25,6 +25,10 @@ To provide a concrete example, suppose you develop a component that uses a name 
 
 	name := env.Value[string]("${name}")
 
+For container managed bean:
+
+	name string `value:"${name}"`
+
 ## Accessing Command Line Properties
 
 By default, go-external-config converts any command line option arguments (that is, arguments starting with `--` (or `-`), such as `--server.port=9000`) to a property and adds them to the `Environment`. As mentioned previously, command line properties always take precedence over file-based property sources.
