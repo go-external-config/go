@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"strings"
 	"unicode"
-	"unsafe"
 
 	"github.com/go-external-config/go/lang"
 	"github.com/go-external-config/go/util/concurrent"
@@ -40,13 +39,7 @@ func ConfigurationProperties[T any](prefix string, target *T) *T {
 		value := Instance().ResolveRequiredPlaceholders(rawValue.Value())
 		targetFieldValue := targetValue.FieldByName(reflectField.Name)
 		converted := convertAsType(value, targetFieldValue.Type())
-		if targetFieldValue.CanSet() {
-			targetFieldValue.Set(reflect.ValueOf(converted))
-		} else {
-			ptr := unsafe.Pointer(targetFieldValue.UnsafeAddr())
-			settableField := reflect.NewAt(targetFieldValue.Type(), ptr).Elem()
-			settableField.Set(reflect.ValueOf(converted))
-		}
+		reflects.Settable(targetFieldValue).Set(reflect.ValueOf(converted))
 	}
 	return target
 }
