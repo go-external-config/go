@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/go-errr/go/err"
 	"github.com/go-external-config/go/lang"
 	"github.com/go-external-config/go/util/concurrent"
 	"github.com/go-external-config/go/util/reflects"
@@ -53,6 +54,9 @@ func BindProperties[T any](target *T) *T {
 // Binds properties to the target struct using field tags.
 func BindPropertiesAny(target any) any {
 	reflects.ForEachTaggedField(target, ValueTag, func(field reflects.Field) {
+		defer err.Catch(func(e any) {
+			panic(err.NewRuntimeExceptionFrom(fmt.Sprintf("Cannot bind configuration value '%s' to field '%s'", field.TagValue, field.Field.Name), e))
+		})
 		value := Instance().ResolveRequiredPlaceholders(field.TagValue)
 		converted := convertAsType(value, field.Type)
 		field.Value.Set(reflect.ValueOf(converted))
