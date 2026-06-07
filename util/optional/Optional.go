@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-errr/go/err"
-	"github.com/go-external-config/go/lang"
+	"github.com/go-errr/go/lang"
 )
 
 type Optional[T any] struct {

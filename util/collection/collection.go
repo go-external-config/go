@@ -5,6 +5,16 @@ import (
 	"slices"
 )
 
+func FirstNonEmpty[T comparable](values ...T) T {
+	empty := *new(T)
+	for _, value := range values {
+		if value != empty {
+			return value
+		}
+	}
+	return empty
+}
+
 func SliceToSet[T comparable](slice []T) map[T]any {
 	result := make(map[T]any)
 	for _, value := range slice {

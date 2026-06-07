@@ -10,7 +10,7 @@ import (
 	"github.com/expr-lang/expr/conf"
 	"github.com/expr-lang/expr/parser"
 	"github.com/go-errr/go/err"
-	"github.com/go-external-config/go/lang"
+	"github.com/go-external-config/go/util/collection"
 	"github.com/go-external-config/go/util/optional"
 	"github.com/go-external-config/go/util/regex"
 )
@@ -71,7 +71,7 @@ func (this *ExprProcessor) Resolve(match *regex.Match,
 			panic(err.NewRuntimeException(fmt.Sprintf("Cannot resolve property %s", match.Expr())))
 		}
 	} else {
-		expression := lang.FirstNonEmpty(match.NamedGroup("expr").OrElse(""), match.NamedGroup("complex").OrElse(""))
+		expression := collection.FirstNonEmpty(match.NamedGroup("expr").OrElse(""), match.NamedGroup("complex").OrElse(""))
 		resolved = optional.OfNilable(this.eval(expression, this.context)).OrElsePanic("Cannot evaluate expression %s", match.Expr())
 	}
 	// fmt.Printf("ExprProcessor: %s -> %s\n", match.Expr(), resolved)

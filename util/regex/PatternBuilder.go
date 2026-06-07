@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-external-config/go/lang"
+	"github.com/go-errr/go/lang"
 )
 
 type PatternBuilder struct {
