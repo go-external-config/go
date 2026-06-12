@@ -12,7 +12,7 @@ func Test_Base64PropertySource(t *testing.T) {
 		env.SetActiveProfiles("").
 			WithPropertySource(env.MapPropertySourceOfMap("delegate", map[string]string{
 				"base64Encoded": "base64:IEhlbGxvIFdvcmxkISA="})).
-			WithPropertySource(env.NewBase64PropertySource(env.Instance()))
+			WithPropertySource(env.NewBase64PropertySource())
 		require.Equal(t, " Hello World! ", env.Value[string]("${base64Encoded}"))
 	})
 }

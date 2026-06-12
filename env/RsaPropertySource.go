@@ -16,6 +16,8 @@ import (
 	"github.com/go-external-config/go/util/optional"
 )
 
+const RSA_VALUE_PREFIX = "RSA:"
+
 // Custom property source as an additional logic for decrypting properties using RSA private key, like pass=RSA:m+WQ5zMBqwMmEEP...
 //
 // Initialize at the beginning of the main package:
@@ -44,12 +46,10 @@ import (
 //
 // | base64 - encodes the ciphertext to text format. It is safe to remove any line breaks.
 type RsaPropertySource struct {
-	environment *Environment
 }
 
 func NewRsaPropertySource() *RsaPropertySource {
-	return &RsaPropertySource{
-		environment: Instance()}
+	return &RsaPropertySource{}
 }
 
 func (this *RsaPropertySource) Name() string {
@@ -59,7 +59,7 @@ func (this *RsaPropertySource) Name() string {
 func (this *RsaPropertySource) HasProperty(key string) bool {
 	for _, source := range environment.PropertySources() {
 		if source.Properties() != nil && source.HasProperty(key) {
-			return strings.HasPrefix(source.Property(key), "RSA:")
+			return strings.HasPrefix(source.Property(key), RSA_VALUE_PREFIX)
 		}
 	}
 	return false
@@ -68,15 +68,15 @@ func (this *RsaPropertySource) HasProperty(key string) bool {
 func (this *RsaPropertySource) Property(key string) string {
 	for _, source := range environment.PropertySources() {
 		if source.Properties() != nil && source.HasProperty(key) {
-			value := source.Property(key)[4:]
+			value := source.Property(key)[len(RSA_VALUE_PREFIX):]
 			rsaPrivateKeyPath := environment.Property("rsa.privateKey.path")
-			return decryptWithPrivateKey(key, value, rsaPrivateKeyPath)
+			return this.decryptWithPrivateKey(key, value, rsaPrivateKeyPath)
 		}
 	}
 	panic(err.NewIllegalArgumentException("No value present for " + key))
 }
 
-func decryptWithPrivateKey(key, value, privateKeyPath string) string {
+func (this *RsaPropertySource) decryptWithPrivateKey(key, value, privateKeyPath string) string {
 	data, _ := os.ReadFile(privateKeyPath)
 	block, _ := pem.Decode(data)
 	lang.Assert(block != nil, "No PEM block found in %s", privateKeyPath)

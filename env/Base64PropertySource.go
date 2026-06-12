@@ -10,12 +10,10 @@ import (
 
 // Custom property source as an additional logic for properties processing, like property=base64:dGVzdAo=
 type Base64PropertySource struct {
-	environment *Environment
 }
 
-func NewBase64PropertySource(environment *Environment) *Base64PropertySource {
-	return &Base64PropertySource{
-		environment: environment}
+func NewBase64PropertySource() *Base64PropertySource {
+	return &Base64PropertySource{}
 }
 
 func (this *Base64PropertySource) Name() string {
