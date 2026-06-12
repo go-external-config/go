@@ -262,6 +262,26 @@ my.number-less-than-ten=${random.int(10)}
 my.number-in-range=${random.int(1024,65536)}
 ```
 
+### Cached Values
+
+The [CachedPropertySource](https://github.com/go-external-config/go/blob/main/env/CachedPropertySource.go) is useful for caching dynamically resolved values for the lifetime of the application. Values prefixed with `cached:` are resolved only once per property key and then reused for all subsequent lookups.
+
+This is particularly useful when combining generators such as `random.*` with values that should remain stable during the application run, for example application instance identifiers, node identifiers, or ephemeral secrets generated at startup.
+
+```properties
+node.id=cached:${random.uuid}
+```
+
+In the example above, property is resolved only once. Every subsequent lookup of `node.id` returns the same value.
+
+Properties without the `cached:` prefix retain their original behavior. For example:
+
+```properties
+request.id=${random.uuid}
+```
+
+produces a new UUID on every lookup, which is useful for values that are expected to be unique, such as request, message, or task identifiers.
+
 ### Encrypting Properties
 
 [RsaPropertySource](https://github.com/go-external-config/go/blob/main/env/RsaPropertySource.go) (available on demand) is useful for decrypting property values in RSA format. One manual step less when conducting production release.  

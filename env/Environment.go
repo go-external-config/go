@@ -59,7 +59,8 @@ func newEnvironment(activeProfiles string) *Environment {
 	environment.loadApplicationParameters()
 	environment.loadApplicationConfiguration(activeProfiles)
 	environment.WithPropertySource(NewRandomValuePropertySource())
-	environment.WithPropertySource(NewBase64PropertySource(&environment))
+	environment.WithPropertySource(NewBase64PropertySource())
+	environment.WithPropertySource(NewCachedPropertySource())
 	return &environment
 }
 
