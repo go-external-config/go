@@ -69,8 +69,9 @@ func (this *CachedPropertySource) Property(key string) string {
 	}
 	for _, source := range environment.PropertySources() {
 		if source.Properties() != nil && source.HasProperty(key) {
-			result := fmt.Sprint(environment.ResolveRequiredPlaceholders(source.Property(key)[len(CACHED_VALUE_PREFIX):]))
-			return this.cachedProperties.PutIfAbsent(key, result)
+			value := source.Property(key)[len(CACHED_VALUE_PREFIX):]
+			resolved := environment.ResolveRequiredPlaceholders(value)
+			return this.cachedProperties.PutIfAbsent(key, fmt.Sprint(resolved))
 		}
 	}
 	panic(err.NewIllegalArgumentException("No value present for " + key))

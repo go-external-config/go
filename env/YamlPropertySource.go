@@ -22,7 +22,7 @@ func (this *YamlPropertySource) propertiesFromYaml(yamlStr string) map[string]st
 	var parsedYaml any
 	e := yaml.Unmarshal([]byte(yamlStr), &parsedYaml)
 	if e != nil {
-		panic(err.NewRuntimeException(fmt.Sprintf("Error unmarshaling yaml: %v", e)))
+		panic(err.NewRuntimeException(fmt.Sprintf("Unmarshalling failed: %v", e)))
 	}
 	properties := make(map[string]string)
 	this.flattenYaml(parsedYaml, "", properties)
