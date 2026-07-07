@@ -1,7 +1,6 @@
 # go-external-config
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/go-external-config/go.svg)](https://pkg.go.dev/github.com/go-external-config/go)
-[![Go Report Card](https://goreportcard.com/badge/github.com/go-external-config/go)](https://goreportcard.com/report/github.com/go-external-config/go)
 [![Release](https://img.shields.io/github/v/release/go-external-config/go)](https://github.com/go-external-config/go/releases)
 
 go-external-config lets you externalize your configuration so that you can work with the same application code in different environments. You can use a variety of external configuration sources including properties files, YAML files, environment variables, and command-line arguments.
