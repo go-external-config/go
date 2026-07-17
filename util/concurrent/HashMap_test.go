@@ -2,9 +2,11 @@ package concurrent_test
 
 import (
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/go-external-config/go/util/concurrent"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHashMapBasic(t *testing.T) {
@@ -141,4 +143,45 @@ func TestHashMapMerge(t *testing.T) {
 		}
 		return true
 	})
+}
+
+func TestHashMapComputeIfAbsentConcurrent(t *testing.T) {
+	m := concurrent.NewHashMap[string, int]()
+	const goroutines = 100
+	var calls atomic.Int64
+	var wg sync.WaitGroup
+	for range goroutines {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			value, ok := m.ComputeIfAbsent("key", func(string) (int, bool) {
+				calls.Add(1)
+				return 42, true
+			})
+			require.True(t, ok, "Expected key to exist")
+			require.Equal(t, 42, value)
+		}()
+	}
+	wg.Wait()
+	require.Equal(t, int64(1), calls.Load())
+	require.Equal(t, 1, m.Size())
+	require.Equal(t, 42, m.Get("key"))
+}
+
+func TestHashMapComputeConcurrent(t *testing.T) {
+	m := concurrent.NewHashMap[string, int]()
+	const goroutines = 1000
+	var wg sync.WaitGroup
+	for range goroutines {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			m.Compute("counter", func(_ string, previous int, exists bool) (int, bool) {
+				return previous + 1, true
+			})
+		}()
+	}
+	wg.Wait()
+	require.Equal(t, goroutines, m.Get("counter"))
+	require.Equal(t, 1, m.Size())
 }

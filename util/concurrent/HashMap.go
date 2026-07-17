@@ -95,6 +95,38 @@ func (m *HashMap[K, V]) Replace(key K, newValue V) bool {
 	return false
 }
 
+func (m *HashMap[K, V]) Compute(key K, remapping func(key K, previous V, exists bool) (V, bool)) (V, bool) {
+    b := m.getBucket(key)
+    b.mu.Lock()
+    defer b.mu.Unlock()
+    previous, exists := b.data[key]
+    value, ok := remapping(key, previous, exists)
+    if ok {
+        b.data[key] = value
+        if !exists {
+            m.size.Add(1)
+        }
+    } else if exists {
+        delete(b.data, key)
+        m.size.Add(-1)
+    }
+    return value, ok
+}
+func (m *HashMap[K, V]) ComputeIfAbsent(key K, mapping func(key K) (V, bool)) (V, bool) {
+    b := m.getBucket(key)
+    b.mu.Lock()
+    defer b.mu.Unlock()
+    if value, exists := b.data[key]; exists {
+        return value, true
+    }
+    value, ok := mapping(key)
+    if ok {
+        b.data[key] = value
+        m.size.Add(1)
+    }
+    return value, ok
+}
+
 func (m *HashMap[K, V]) Remove(key K) {
 	b := m.getBucket(key)
 	b.mu.Lock()
