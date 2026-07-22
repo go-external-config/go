@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/go-errr/go/lang"
-	"github.com/go-external-config/go/util/optional"
+	"github.com/go-jang/go/lang"
+	"github.com/go-jang/go/util/optional"
 )
 
 func Exists(path string) bool {

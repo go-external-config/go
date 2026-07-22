@@ -1,10 +1,11 @@
 module github.com/go-external-config/go
 
-go 1.24.5
+go 1.26.2
 
 require (
 	github.com/expr-lang/expr v1.17.5
-	github.com/go-errr/go v1.0.12
+	github.com/go-errr/go v1.0.13
+	github.com/go-jang/go v1.0.0
 	github.com/magiconair/properties v1.8.10
 	github.com/stretchr/testify v1.11.1
 	gopkg.in/yaml.v3 v3.0.1

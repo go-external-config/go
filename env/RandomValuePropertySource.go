@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/go-errr/go/err"
-	"github.com/go-errr/go/lang"
-	"github.com/go-external-config/go/util/optional"
-	"github.com/go-external-config/go/util/regex"
+	"github.com/go-jang/go/lang"
+	"github.com/go-jang/go/util/optional"
+	"github.com/go-jang/go/util/regex"
 )
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"

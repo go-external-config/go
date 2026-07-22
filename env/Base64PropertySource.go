@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-errr/go/err"
-	"github.com/go-external-config/go/util/optional"
+	"github.com/go-jang/go/util/optional"
 )
 
 // Custom property source as an additional logic for properties processing, like property=base64:dGVzdAo=

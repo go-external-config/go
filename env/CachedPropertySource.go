@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/go-errr/go/err"
-	"github.com/go-external-config/go/util/concurrent"
+	"github.com/go-jang/go/util/concurrent"
 )
 
 const CACHED_VALUE_PREFIX = "cached:"

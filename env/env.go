@@ -7,10 +7,10 @@ import (
 	"unicode"
 
 	"github.com/go-errr/go/err"
-	"github.com/go-errr/go/lang"
-	"github.com/go-external-config/go/util/concurrent"
-	"github.com/go-external-config/go/util/reflects"
-	"github.com/go-external-config/go/util/str"
+	"github.com/go-external-config/go/str"
+	"github.com/go-jang/go/lang"
+	refl "github.com/go-jang/go/lang/reflect"
+	"github.com/go-jang/go/util/concurrent"
 )
 
 const ValueTag = "value"
@@ -40,7 +40,7 @@ func ConfigurationProperties[T any](prefix string, target *T) *T {
 		value := Instance().ResolveRequiredPlaceholders(rawValue.Value())
 		targetFieldValue := targetValue.FieldByName(reflectField.Name)
 		converted := convertAsType(value, targetFieldValue.Type())
-		reflects.Settable(targetFieldValue).Set(reflect.ValueOf(converted))
+		refl.Settable(targetFieldValue).Set(reflect.ValueOf(converted))
 	}
 	return target
 }
@@ -53,7 +53,7 @@ func BindProperties[T any](target *T) *T {
 
 // Binds properties to the target struct using field tags.
 func BindPropertiesAny(target any) any {
-	reflects.ForEachTaggedField(target, ValueTag, func(field reflects.Field) {
+	refl.ForEachTaggedField(target, ValueTag, func(field refl.Field) {
 		defer err.Catch(func(e any) {
 			panic(err.NewRuntimeExceptionFrom(fmt.Sprintf("Cannot bind configuration value '%s' to field '%s'", field.TagValue, field.Field.Name), e))
 		})

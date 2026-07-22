@@ -8,8 +8,7 @@ import (
 	"unicode"
 
 	"github.com/go-errr/go/err"
-	"github.com/go-errr/go/lang"
-	"github.com/go-external-config/go/util/optional"
+	"github.com/go-jang/go/lang"
 )
 
 func Parse[T any](value string) T {
@@ -118,19 +117,4 @@ func ReplaceChars(str string, rules map[rune]rune) string {
 		}
 	}
 	return builder.String()
-}
-
-func Join(delim string, values ...any) string {
-	if len(values) == 0 {
-		return ""
-	}
-	var delimRequired = false
-	var b strings.Builder
-	for _, value := range values {
-		if delimRequired {
-			b.WriteString(delim)
-		}
-		delimRequired = optional.OfCommaErr(b.WriteString(fmt.Sprint(value))).OrElsePanic("Cannot write %v", value) > 0
-	}
-	return b.String()
 }

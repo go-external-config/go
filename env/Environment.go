@@ -10,13 +10,13 @@ import (
 	"sync"
 
 	"github.com/go-errr/go/err"
-	"github.com/go-errr/go/lang"
-	"github.com/go-external-config/go/util/collection"
-	"github.com/go-external-config/go/util/concurrent"
-	"github.com/go-external-config/go/util/files"
-	"github.com/go-external-config/go/util/optional"
-	"github.com/go-external-config/go/util/regex"
-	"github.com/go-external-config/go/util/str"
+	"github.com/go-external-config/go/files"
+	"github.com/go-external-config/go/str"
+	"github.com/go-jang/go/lang"
+	"github.com/go-jang/go/util/collections"
+	"github.com/go-jang/go/util/concurrent"
+	"github.com/go-jang/go/util/optional"
+	"github.com/go-jang/go/util/regex"
 )
 
 var locationPattern = regexp.MustCompile(regex.NewPatternBuilder().Next(`{location:.+}\[{fantomExt:\.[\w]+}\]`).Build())
@@ -99,7 +99,7 @@ func (this *Environment) MatchesProfiles(profiles ...string) bool {
 	if len(profiles) == 0 {
 		return true
 	}
-	activeProfiles := collection.SliceToSet(this.activeProfiles)
+	activeProfiles := collections.SliceToSet(this.activeProfiles)
 	processor := regex.PatternProcessorOf(regex.NewPatternBuilder().Next("{word:\\w+}|{sign:\\W}").Build())
 	processor.OverrideResolve(func(match *regex.Match,
 		super func(*regex.Match) any) any {
@@ -137,7 +137,7 @@ func (this *Environment) ActiveProfiles() []string {
 
 // first wins
 func (this *Environment) PropertySources() []PropertySource {
-	return collection.ReverseSlice(this.propertySources)
+	return collections.ReverseSlice(this.propertySources)
 }
 
 // PROFILES_ACTIVE=dev,hsqldb
@@ -170,13 +170,13 @@ func (this *Environment) loadApplicationParameters() {
 // application.yaml
 // application-<profile>.yaml
 func (this *Environment) loadApplicationConfiguration(bootstrapProfiles string) {
-	activeProfiles := collection.FirstNonEmpty(bootstrapProfiles, this.paramsPropertySource.properties["profiles.active"], this.environPropertySource.properties["PROFILES_ACTIVE"])
+	activeProfiles := collections.FirstNonEmpty(bootstrapProfiles, this.paramsPropertySource.properties["profiles.active"], this.environPropertySource.properties["PROFILES_ACTIVE"])
 	this.activeProfiles = lang.If(len(activeProfiles) == 0, this.activeProfiles, append(this.activeProfiles, strings.Split(activeProfiles, ",")...))
-	configName := collection.FirstNonEmpty(this.paramsPropertySource.properties["config.name"], this.environPropertySource.properties["CONFIG_NAME"], "application")
+	configName := collections.FirstNonEmpty(this.paramsPropertySource.properties["config.name"], this.environPropertySource.properties["CONFIG_NAME"], "application")
 	defaultLocation := "./,./config/"
-	additionalLocation := collection.FirstNonEmpty(this.paramsPropertySource.properties["config.additional-location"], this.environPropertySource.properties["CONFIG_ADDITIONALLOCATION"])
+	additionalLocation := collections.FirstNonEmpty(this.paramsPropertySource.properties["config.additional-location"], this.environPropertySource.properties["CONFIG_ADDITIONALLOCATION"])
 	extendedDefaultLocation := lang.If(len(additionalLocation) == 0, defaultLocation, defaultLocation+","+additionalLocation)
-	configLocation := collection.FirstNonEmpty(this.paramsPropertySource.properties["config.location"], this.environPropertySource.properties["CONFIG_LOCATION"])
+	configLocation := collections.FirstNonEmpty(this.paramsPropertySource.properties["config.location"], this.environPropertySource.properties["CONFIG_LOCATION"])
 	extendedConfigLocation := lang.If(len(additionalLocation) == 0, configLocation, additionalLocation+","+configLocation)
 	resolvedConfigLocation := lang.If(len(configLocation) == 0, extendedDefaultLocation, extendedConfigLocation)
 
@@ -216,7 +216,7 @@ func (this *Environment) loadFile(path, fantomExt string) {
 	}
 	var result PropertySource
 	fmt.Printf("loading properties from %s\n", path)
-	ext := collection.FirstNonEmpty(fantomExt, filepath.Ext(path))
+	ext := collections.FirstNonEmpty(fantomExt, filepath.Ext(path))
 	lang.Assert(len(ext) != 0, "Cannot load from location %s. If location supposed to be a directory use '/' at the end. Otherwise provide extension hint in square brackets like [.properties] to derive property source type", path)
 	file := optional.OfCommaErr(os.Open(path)).OrElsePanic("Cannot open file %s", path)
 	defer file.Close()
