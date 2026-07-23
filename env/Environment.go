@@ -15,6 +15,7 @@ import (
 	"github.com/go-jang/go/lang"
 	"github.com/go-jang/go/util/collections"
 	"github.com/go-jang/go/util/concurrent"
+	"github.com/go-jang/go/util/objects"
 	"github.com/go-jang/go/util/optional"
 	"github.com/go-jang/go/util/regex"
 )
@@ -170,13 +171,13 @@ func (this *Environment) loadApplicationParameters() {
 // application.yaml
 // application-<profile>.yaml
 func (this *Environment) loadApplicationConfiguration(bootstrapProfiles string) {
-	activeProfiles := collections.FirstNonEmpty(bootstrapProfiles, this.paramsPropertySource.properties["profiles.active"], this.environPropertySource.properties["PROFILES_ACTIVE"])
+	activeProfiles := objects.FirstNonZero(bootstrapProfiles, this.paramsPropertySource.properties["profiles.active"], this.environPropertySource.properties["PROFILES_ACTIVE"])
 	this.activeProfiles = lang.If(len(activeProfiles) == 0, this.activeProfiles, append(this.activeProfiles, strings.Split(activeProfiles, ",")...))
-	configName := collections.FirstNonEmpty(this.paramsPropertySource.properties["config.name"], this.environPropertySource.properties["CONFIG_NAME"], "application")
+	configName := objects.FirstNonZero(this.paramsPropertySource.properties["config.name"], this.environPropertySource.properties["CONFIG_NAME"], "application")
 	defaultLocation := "./,./config/"
-	additionalLocation := collections.FirstNonEmpty(this.paramsPropertySource.properties["config.additional-location"], this.environPropertySource.properties["CONFIG_ADDITIONALLOCATION"])
+	additionalLocation := objects.FirstNonZero(this.paramsPropertySource.properties["config.additional-location"], this.environPropertySource.properties["CONFIG_ADDITIONALLOCATION"])
 	extendedDefaultLocation := lang.If(len(additionalLocation) == 0, defaultLocation, defaultLocation+","+additionalLocation)
-	configLocation := collections.FirstNonEmpty(this.paramsPropertySource.properties["config.location"], this.environPropertySource.properties["CONFIG_LOCATION"])
+	configLocation := objects.FirstNonZero(this.paramsPropertySource.properties["config.location"], this.environPropertySource.properties["CONFIG_LOCATION"])
 	extendedConfigLocation := lang.If(len(additionalLocation) == 0, configLocation, additionalLocation+","+configLocation)
 	resolvedConfigLocation := lang.If(len(configLocation) == 0, extendedDefaultLocation, extendedConfigLocation)
 
@@ -216,7 +217,7 @@ func (this *Environment) loadFile(path, fantomExt string) {
 	}
 	var result PropertySource
 	fmt.Printf("loading properties from %s\n", path)
-	ext := collections.FirstNonEmpty(fantomExt, filepath.Ext(path))
+	ext := objects.FirstNonZero(fantomExt, filepath.Ext(path))
 	lang.Assert(len(ext) != 0, "Cannot load from location %s. If location supposed to be a directory use '/' at the end. Otherwise provide extension hint in square brackets like [.properties] to derive property source type", path)
 	file := optional.OfCommaErr(os.Open(path)).OrElsePanic("Cannot open file %s", path)
 	defer file.Close()
