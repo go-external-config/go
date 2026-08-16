@@ -179,6 +179,15 @@ For example, suppose you have a `/etc/config/myconfig` file that you wish to imp
 config.import=/etc/config/myconfig[.yaml]
 ```
 
+### Logging
+
+`go-external-config` uses Go's standard `log/slog` API. Logging levels
+are controlled by the application's `slog` configuration.
+
+Enable `INFO` logging to see which configuration files were loaded.
+
+See also [go-log4g](https://github.com/go-log4g/core).
+
 ## Using Environment Variables
 
 When running applications on a cloud platform (such as Kubernetes) you often need to read config values that the platform supplies. Assume there’s an environment variable called `CLUSTER`:
