@@ -19,6 +19,7 @@ import (
 	"github.com/go-jang/go/util/objects"
 	"github.com/go-jang/go/util/optional"
 	"github.com/go-jang/go/util/regex"
+	"github.com/go-jang/go/util/stream"
 )
 
 var locationPattern = regexp.MustCompile(regex.NewPatternBuilder().Next(`{location:.+}\[{fantomExt:\.[\w]+}\]`).Build())
@@ -175,7 +176,7 @@ func (this *Environment) loadApplicationConfiguration(bootstrapProfiles string) 
 	activeProfiles := objects.FirstNonZero(bootstrapProfiles, this.paramsPropertySource.properties["profiles.active"], this.environPropertySource.properties["PROFILES_ACTIVE"])
 	this.activeProfiles = lang.If(len(activeProfiles) == 0, this.activeProfiles, append(this.activeProfiles, strings.Split(activeProfiles, ",")...))
 	configName := objects.FirstNonZero(this.paramsPropertySource.properties["config.name"], this.environPropertySource.properties["CONFIG_NAME"], "application")
-	defaultLocation := "./,./config/"
+	defaultLocation := defaultConfigLocation()
 	additionalLocation := objects.FirstNonZero(this.paramsPropertySource.properties["config.additional-location"], this.environPropertySource.properties["CONFIG_ADDITIONALLOCATION"])
 	extendedDefaultLocation := lang.If(len(additionalLocation) == 0, defaultLocation, defaultLocation+","+additionalLocation)
 	configLocation := objects.FirstNonZero(this.paramsPropertySource.properties["config.location"], this.environPropertySource.properties["CONFIG_LOCATION"])
@@ -189,6 +190,14 @@ func (this *Environment) loadApplicationConfiguration(bootstrapProfiles string) 
 			}
 		}
 	}
+}
+
+func defaultConfigLocation() string {
+	if !isTest() {
+		return "./,./config/"
+	}
+	root := moduleRoot()
+	return filepath.ToSlash(root) + "/," + filepath.ToSlash(filepath.Join(root, "config")) + "/"
 }
 
 func (this *Environment) loadConfiguration(location, name, profile string) {
@@ -217,7 +226,6 @@ func (this *Environment) loadFile(path, fantomExt string) {
 		return
 	}
 	var result PropertySource
-	slog.Info(fmt.Sprintf("loading properties from %s", path))
 	ext := objects.FirstNonZero(fantomExt, filepath.Ext(path))
 	lang.Assert(len(ext) != 0, "Cannot load from location %s. If location supposed to be a directory use '/' at the end. Otherwise provide extension hint in square brackets like [.properties] to derive property source type", path)
 	file := optional.OfCommaErr(os.Open(path)).OrElsePanic("Cannot open file %s", path)
@@ -231,6 +239,7 @@ func (this *Environment) loadFile(path, fantomExt string) {
 	default:
 		panic(err.NewRuntimeException(fmt.Sprintf("Cannot load from %s as %s file type is not supported. Use extension hint in square brackets like .env[.properties] to derive property source type", path, ext)))
 	}
+	slog.Info(fmt.Sprintf("Loaded configuration from %s", path))
 	this.propertySources = append(this.propertySources, result)
 	if result.HasProperty("profiles.active") && len(this.activeProfiles) == 1 && this.activeProfiles[0] == "default" {
 		this.activeProfiles = append(this.activeProfiles, strings.Split(result.Property("profiles.active"), ",")...)
@@ -256,6 +265,24 @@ func (this *Environment) loadImport(path, location string) {
 
 func (this *Environment) envVarCanonicalForm(key string) string {
 	return strings.ToUpper(str.ReplaceChars(key, envVarCanonicalFormTranslationRule))
+}
+
+func isTest() bool {
+	return stream.From(os.Args[1:]).
+		Filter(func(s string) bool { return strings.HasPrefix(s, "-test.timeout=") }).
+		FindFirst().Present()
+}
+
+func moduleRoot() string {
+	dir := optional.OfCommaErr(os.Getwd()).OrElsePanic("Cannot get working directory")
+	for {
+		if files.Exists(filepath.Join(dir, "go.mod")) {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		lang.Assert(parent != dir, "Cannot find go.mod from %q", dir)
+		dir = parent
+	}
 }
 
 // Add custom property source to implement additional logic for properties processing, like property=base64:dGVzdAo=.
