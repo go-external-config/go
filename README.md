@@ -188,6 +188,17 @@ Enable `INFO` logging to see which configuration files were loaded.
 
 See also [go-log4g](https://github.com/go-log4g/core).
 
+### Testing
+
+Go runs tests with the package directory as the working directory rather
+than the module root. `go-external-config` automatically detects the Go test runner and
+locates the module root by searching parent directories for `go.mod`.
+
+When running tests, default configuration is looked up in:
+
+1. The module directory
+2. The `config/` subdirectory of the module directory
+
 ## Using Environment Variables
 
 When running applications on a cloud platform (such as Kubernetes) you often need to read config values that the platform supplies. Assume there’s an environment variable called `CLUSTER`:
