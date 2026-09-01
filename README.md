@@ -323,7 +323,7 @@ echo -n "dbSecret123" | openssl pkeyutl -encrypt \
 Enable RSA decryption in the code at the beginning of the main package:
 
 ```go
-_ = env.Instance().WithPropertySource(env.NewRsaPropertySource())
+import _ "github.com/go-external-config/rsa"
 ```
 
 Safely commit encrypted property with the code at feature development time.
@@ -466,6 +466,7 @@ go get github.com/go-external-config/go
 
 ## See also
 
+[github.com/go-external-config/rsa](https://github.com/go-external-config/rsa)  
 [github.com/go-external-config/aws](https://github.com/go-external-config/aws)  
 [github.com/go-external-config/vault](https://github.com/go-external-config/vault)  
 [github.com/go-external-config/consul](https://github.com/go-external-config/consul)  

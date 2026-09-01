@@ -21,7 +21,7 @@ func (this *Base64PropertySource) Name() string {
 }
 
 func (this *Base64PropertySource) HasProperty(key string) bool {
-	for _, source := range environment.PropertySources() {
+	for _, source := range PropertySources() {
 		if source.Properties() != nil && source.HasProperty(key) {
 			return strings.HasPrefix(source.Property(key), "base64:")
 		}
@@ -30,7 +30,7 @@ func (this *Base64PropertySource) HasProperty(key string) bool {
 }
 
 func (this *Base64PropertySource) Property(key string) string {
-	for _, source := range environment.PropertySources() {
+	for _, source := range PropertySources() {
 		if source.Properties() != nil && source.HasProperty(key) {
 			value := source.Property(key)[7:]
 			return strings.TrimRight(string(optional.OfCommaErr(base64.StdEncoding.DecodeString(value)).

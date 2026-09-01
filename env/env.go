@@ -3,6 +3,7 @@ package env
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -15,12 +16,24 @@ import (
 
 const ValueTag = "value"
 
+func Property(key string) string {
+	return Instance().property(key)
+}
+
 // Expression to evaluate against environment properties
 //
 //	require.Equal(t, "value", env.Value[string]("${key:default}"))
 //	require.Equal(t, []string{"host1", "host2", "host3"}, env.Value[[]string]("#{split('${servers}', ',')}"))
 func Value[T any](expression string) T {
-	return convertAs[T](Instance().ResolveRequiredPlaceholders(expression))
+	return convertAs[T](ResolveRequiredPlaceholders(expression))
+}
+
+func ResolvePlaceholders(expression string) any {
+	return Instance().resolvePlaceholders(expression)
+}
+
+func ResolveRequiredPlaceholders(expression string) any {
+	return Instance().resolveRequiredPlaceholders(expression)
 }
 
 // Binds properties with the given prefix to the target struct using field names
@@ -37,7 +50,7 @@ func ConfigurationProperties[T any](prefix string, target *T) *T {
 		if !rawValue.Present() {
 			continue
 		}
-		value := Instance().ResolveRequiredPlaceholders(rawValue.Value())
+		value := ResolveRequiredPlaceholders(rawValue.Value())
 		targetFieldValue := targetValue.FieldByName(reflectField.Name)
 		converted := convertAsType(value, targetFieldValue.Type())
 		refl.Settable(targetFieldValue).Set(reflect.ValueOf(converted))
@@ -57,7 +70,7 @@ func BindPropertiesAny(target any) any {
 		defer err.Catch(func(e any) {
 			panic(err.NewRuntimeExceptionFrom(fmt.Sprintf("Cannot bind configuration value '%s' to field '%s'", field.TagValue, field.Field.Name), e))
 		})
-		value := Instance().ResolveRequiredPlaceholders(field.TagValue)
+		value := ResolveRequiredPlaceholders(field.TagValue)
 		converted := convertAsType(value, field.Type)
 		field.Value.Set(reflect.ValueOf(converted))
 	})
@@ -67,7 +80,7 @@ func BindPropertiesAny(target any) any {
 
 // last wins
 func ActiveProfiles() []string {
-	return Instance().activeProfiles
+	return Instance().activeProfiles()
 }
 
 // Determine whether one or more of the given profiles is active.
@@ -76,34 +89,57 @@ func ActiveProfiles() []string {
 // For example, env.MatchesProfiles("p1", "!p2") will return true if profile 'p1' is active or 'p2' is not active.
 // A compound expression allows for more complicated profile logic to be expressed, for example "production & cloud".
 func MatchesProfiles(profiles ...string) bool {
-	return Instance().MatchesProfiles(profiles...)
+	return Instance().matchesProfiles(profiles...)
 }
 
 // Bootstrap new environment with profiles listed, last wins.
-// Do nothing if very profiles are already set in the specified order.
-// Reload environment if empty value provided
-func SetActiveProfiles(profiles string) *Environment {
-	var result *Environment
+// Do nothing if the same profiles are already set in the specified order.
+func SetActiveProfiles(profiles string) {
 	concurrent.Synchronized(&environmentMu, func() {
-		if environment != nil && "default,"+profiles == strings.Join(environment.ActiveProfiles(), ",") {
-			result = environment
+		if environment != nil && slices.Equal(environment.activeProfiles(), splitProfiles(profiles)) {
 			return
 		}
 
-		previous := environment
 		environment = newEnvironment(profiles)
-
-		// keep custom property preprocessors
-		if previous != nil {
-			for _, source := range previous.propertySources {
-				if source.Properties() == nil {
-					environment.WithPropertySource(source)
-				}
-			}
-		}
-		result = environment
 	})
-	return result
+}
+
+func splitProfiles(profiles string) []string {
+	profiles = strings.TrimSpace(profiles)
+	if profiles == "" {
+		return nil
+	}
+	return profileSeparator.Split(profiles, -1)
+}
+
+func PropertySources() []PropertySource {
+	return Instance().propertySources()
+}
+
+// Register custom property source to implement additional logic for properties processing, like property=base64:dGVzdAo=.
+// See Base64PropertySource (available by default) and RsaPropertySource
+func RegisterPropertySource(source PropertySource) {
+	concurrent.Synchronized(&environmentMu, func() {
+		registeredPropertySources = append(registeredPropertySources, source)
+		if environment != nil {
+			environment.addPropertySource(source)
+		}
+	})
+}
+
+// Add custom context variables to be evaluated.
+// See env.ExprProcessor for expressions and variables available by default.
+//
+//	env.SetContextVariable("runtime", map[string]any{
+//		"NumCPU": runtime.NumCPU(),
+//	})
+func SetContextVariable(key string, value any) {
+	concurrent.Synchronized(&environmentMu, func() {
+		contextVariables[key] = value
+		if environment != nil {
+			environment.setContextVariable(key, value)
+		}
+	})
 }
 
 func convertAs[T any](value any) T {

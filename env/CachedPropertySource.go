@@ -55,7 +55,7 @@ func (this *CachedPropertySource) HasProperty(key string) bool {
 	if this.cachedProperties.ContainsKey(key) {
 		return true
 	}
-	for _, source := range environment.PropertySources() {
+	for _, source := range PropertySources() {
 		if source.Properties() != nil && source.HasProperty(key) {
 			return strings.HasPrefix(source.Property(key), CACHED_VALUE_PREFIX)
 		}
@@ -67,10 +67,10 @@ func (this *CachedPropertySource) Property(key string) string {
 	if this.cachedProperties.ContainsKey(key) {
 		return this.cachedProperties.Get(key)
 	}
-	for _, source := range environment.PropertySources() {
+	for _, source := range PropertySources() {
 		if source.Properties() != nil && source.HasProperty(key) {
 			value := source.Property(key)[len(CACHED_VALUE_PREFIX):]
-			resolved := environment.ResolveRequiredPlaceholders(value)
+			resolved := ResolveRequiredPlaceholders(value)
 			return this.cachedProperties.PutIfAbsent(key, fmt.Sprint(resolved))
 		}
 	}

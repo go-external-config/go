@@ -22,6 +22,8 @@ import (
 	"github.com/go-jang/go/util/stream"
 )
 
+var defaultProfile = "default"
+var profileSeparator = regexp.MustCompile(`\s*,\s*`)
 var locationPattern = regexp.MustCompile(regex.NewPatternBuilder().Next(`{location:.+}\[{fantomExt:\.[\w]+}\]`).Build())
 var envVarCanonicalFormTranslationRule = map[rune]rune{
 	'.': '_',
@@ -32,13 +34,16 @@ var envVarCanonicalFormTranslationRule = map[rune]rune{
 
 var environment *Environment
 var environmentMu sync.Mutex
+var registeredPropertySources []PropertySource
+var contextVariables = make(map[string]any)
 
 type Environment struct {
-	activeProfiles        []string
+	profiles              []string
 	paramsPropertySource  *MapPropertySource
 	environPropertySource *MapPropertySource
-	propertySources       []PropertySource
+	sources               []PropertySource
 	exprProcessor         *ExprProcessor
+	strictExprProcessor   *ExprProcessor
 }
 
 func Instance() *Environment {
@@ -54,21 +59,31 @@ func Instance() *Environment {
 
 func newEnvironment(activeProfiles string) *Environment {
 	environment := Environment{
-		activeProfiles:  []string{"default"},
-		propertySources: make([]PropertySource, 0),
-		exprProcessor:   ExprProcessorOf(true)}
+		profiles:            make([]string, 0),
+		sources:             make([]PropertySource, 0),
+		exprProcessor:       NewExprProcessor(false),
+		strictExprProcessor: NewExprProcessor(true)}
+
+	for key, value := range contextVariables {
+		environment.setContextVariable(key, value)
+	}
 
 	environment.loadEnvironmentVariables()
 	environment.loadApplicationParameters()
 	environment.loadApplicationConfiguration(activeProfiles)
-	environment.WithPropertySource(NewRandomValuePropertySource())
-	environment.WithPropertySource(NewBase64PropertySource())
-	environment.WithPropertySource(NewCachedPropertySource())
+	environment.addPropertySource(NewRandomValuePropertySource())
+	environment.addPropertySource(NewBase64PropertySource())
+	environment.addPropertySource(NewCachedPropertySource())
+
+	for _, source := range registeredPropertySources {
+		environment.addPropertySource(source)
+	}
+
 	return &environment
 }
 
-func (this *Environment) Property(key string) string {
-	return fmt.Sprint(this.ResolveRequiredPlaceholders(this.lookupRawProperty(key).
+func (this *Environment) property(key string) string {
+	return fmt.Sprint(this.resolveRequiredPlaceholders(this.lookupRawProperty(key).
 		OrElsePanic("No value present for %s", key)))
 }
 
@@ -80,29 +95,28 @@ func (this *Environment) lookupRawProperty(key string) *optional.Optional[string
 	} else if envCanonical := this.envVarCanonicalForm(key); this.environPropertySource.HasProperty(envCanonical) {
 		return optional.OfValue(this.environPropertySource.Property(envCanonical))
 	} else {
-		for i := len(this.propertySources) - 1; i >= 0; i-- {
-			if this.propertySources[i].HasProperty(key) {
-				return optional.OfValue(this.propertySources[i].Property(key))
+		for i := len(this.sources) - 1; i >= 0; i-- {
+			if this.sources[i].HasProperty(key) {
+				return optional.OfValue(this.sources[i].Property(key))
 			}
 		}
 	}
 	return optional.OfEmpty[string]()
 }
 
-func (this *Environment) ResolveRequiredPlaceholders(expression string) any {
+func (this *Environment) resolvePlaceholders(expression string) any {
 	return this.exprProcessor.Process(expression)
 }
 
-// Determine whether one or more of the given profiles is active.
-//
-// If a profile begins with '!' the logic is inverted, meaning this method will return true if the given profile is not active.
-// For example, env.MatchesProfiles("p1", "!p2") will return true if profile 'p1' is active or 'p2' is not active.
-// A compound expression allows for more complicated profile logic to be expressed, for example "production & cloud".
-func (this *Environment) MatchesProfiles(profiles ...string) bool {
+func (this *Environment) resolveRequiredPlaceholders(expression string) any {
+	return this.strictExprProcessor.Process(expression)
+}
+
+func (this *Environment) matchesProfiles(profiles ...string) bool {
 	if len(profiles) == 0 {
 		return true
 	}
-	activeProfiles := collections.SliceToSet(this.activeProfiles)
+	activeProfiles := collections.SliceToSet(this.profiles)
 	processor := regex.PatternProcessorOf(regex.NewPatternBuilder().Next("{word:\\w+}|{sign:\\W}").Build())
 	processor.OverrideResolve(func(match *regex.Match,
 		super func(*regex.Match) any) any {
@@ -134,13 +148,13 @@ func (this *Environment) MatchesProfiles(profiles ...string) bool {
 }
 
 // last wins
-func (this *Environment) ActiveProfiles() []string {
-	return this.activeProfiles
+func (this *Environment) activeProfiles() []string {
+	return this.profiles
 }
 
 // first wins
-func (this *Environment) PropertySources() []PropertySource {
-	return collections.ReverseSlice(this.propertySources)
+func (this *Environment) propertySources() []PropertySource {
+	return collections.ReverseSlice(this.sources)
 }
 
 // PROFILES_ACTIVE=dev,hsqldb
@@ -174,9 +188,9 @@ func (this *Environment) loadApplicationParameters() {
 // application-<profile>.yaml
 func (this *Environment) loadApplicationConfiguration(bootstrapProfiles string) {
 	activeProfiles := objects.FirstNonZero(bootstrapProfiles, this.paramsPropertySource.properties["profiles.active"], this.environPropertySource.properties["PROFILES_ACTIVE"])
-	this.activeProfiles = lang.If(len(activeProfiles) == 0, this.activeProfiles, append(this.activeProfiles, strings.Split(activeProfiles, ",")...))
+	this.profiles = splitProfiles(activeProfiles)
 	configName := objects.FirstNonZero(this.paramsPropertySource.properties["config.name"], this.environPropertySource.properties["CONFIG_NAME"], "application")
-	defaultLocation := defaultConfigLocation()
+	defaultLocation := this.defaultConfigLocation()
 	additionalLocation := objects.FirstNonZero(this.paramsPropertySource.properties["config.additional-location"], this.environPropertySource.properties["CONFIG_ADDITIONALLOCATION"])
 	extendedDefaultLocation := lang.If(len(additionalLocation) == 0, defaultLocation, defaultLocation+","+additionalLocation)
 	configLocation := objects.FirstNonZero(this.paramsPropertySource.properties["config.location"], this.environPropertySource.properties["CONFIG_LOCATION"])
@@ -184,19 +198,23 @@ func (this *Environment) loadApplicationConfiguration(bootstrapProfiles string) 
 	resolvedConfigLocation := lang.If(len(configLocation) == 0, extendedDefaultLocation, extendedConfigLocation)
 
 	for _, location := range strings.Split(resolvedConfigLocation, ",") {
-		for i := 0; i < len(this.activeProfiles); i++ {
+		for i := 0; i <= len(this.profiles); i++ {
+			profile := defaultProfile
+			if i > 0 {
+				profile = this.profiles[i-1]
+			}
 			for _, locationGroup := range strings.Split(location, ";") {
-				this.loadConfiguration(locationGroup, configName, this.activeProfiles[i])
+				this.loadConfiguration(locationGroup, configName, profile)
 			}
 		}
 	}
 }
 
-func defaultConfigLocation() string {
-	if !isTest() {
+func (this *Environment) defaultConfigLocation() string {
+	if !this.isTest() {
 		return "./,./config/"
 	}
-	root := moduleRoot()
+	root := this.moduleRoot()
 	return filepath.ToSlash(root) + "/," + filepath.ToSlash(filepath.Join(root, "config")) + "/"
 }
 
@@ -210,14 +228,14 @@ func (this *Environment) loadConfiguration(location, name, profile string) {
 	}
 
 	if strings.HasSuffix(location, "/") {
-		this.loadFile(files.RelativePath(location, lang.If(profile == "default", name+".yml", name+"-"+profile+".yml")), fantomExt)
-		this.loadFile(files.RelativePath(location, lang.If(profile == "default", name+".yaml", name+"-"+profile+".yaml")), fantomExt)
-		this.loadFile(files.RelativePath(location, lang.If(profile == "default", name+".properties", name+"-"+profile+".properties")), fantomExt)
+		this.loadFile(files.RelativePath(location, lang.If(profile == defaultProfile, name+".yml", name+"-"+profile+".yml")), fantomExt)
+		this.loadFile(files.RelativePath(location, lang.If(profile == defaultProfile, name+".yaml", name+"-"+profile+".yaml")), fantomExt)
+		this.loadFile(files.RelativePath(location, lang.If(profile == defaultProfile, name+".properties", name+"-"+profile+".properties")), fantomExt)
 	} else if len(fantomExt) > 0 {
-		this.loadFile(lang.If(profile == "default", location, location+"-"+profile), fantomExt)
+		this.loadFile(lang.If(profile == defaultProfile, location, location+"-"+profile), fantomExt)
 	} else {
 		ext := filepath.Ext(location)
-		this.loadFile(lang.If(profile == "default", location, location[:len(location)-len(ext)]+"-"+profile+ext), fantomExt)
+		this.loadFile(lang.If(profile == defaultProfile, location, location[:len(location)-len(ext)]+"-"+profile+ext), fantomExt)
 	}
 }
 
@@ -240,9 +258,9 @@ func (this *Environment) loadFile(path, fantomExt string) {
 		panic(err.NewRuntimeException(fmt.Sprintf("Cannot load from %s as %s file type is not supported. Use extension hint in square brackets like .env[.properties] to derive property source type", path, ext)))
 	}
 	slog.Info(fmt.Sprintf("Loaded configuration from %s", path))
-	this.propertySources = append(this.propertySources, result)
-	if result.HasProperty("profiles.active") && len(this.activeProfiles) == 1 && this.activeProfiles[0] == "default" {
-		this.activeProfiles = append(this.activeProfiles, strings.Split(result.Property("profiles.active"), ",")...)
+	this.sources = append(this.sources, result)
+	if result.HasProperty("profiles.active") && len(this.profiles) == 0 {
+		this.profiles = splitProfiles(result.Property("profiles.active"))
 	}
 	if result.HasProperty("config.import") {
 		for _, location := range strings.Split(result.Property("config.import"), ",") {
@@ -267,13 +285,13 @@ func (this *Environment) envVarCanonicalForm(key string) string {
 	return strings.ToUpper(str.ReplaceChars(key, envVarCanonicalFormTranslationRule))
 }
 
-func isTest() bool {
+func (this *Environment) isTest() bool {
 	return stream.From(os.Args[1:]).
 		Filter(func(s string) bool { return strings.HasPrefix(s, "-test.timeout=") }).
 		FindFirst().Present()
 }
 
-func moduleRoot() string {
+func (this *Environment) moduleRoot() string {
 	dir := optional.OfCommaErr(os.Getwd()).OrElsePanic("Cannot get working directory")
 	for {
 		if files.Exists(filepath.Join(dir, "go.mod")) {
@@ -285,22 +303,12 @@ func moduleRoot() string {
 	}
 }
 
-// Add custom property source to implement additional logic for properties processing, like property=base64:dGVzdAo=.
-// See Base64PropertySource (available by default) and RsaPropertySource
-//
-//	var _ = env.Instance().WithPropertySource(env.NewRsaPropertySource())
-func (this *Environment) WithPropertySource(source PropertySource) *Environment {
-	this.propertySources = append(this.propertySources, source)
-	return this
+func (this *Environment) addPropertySource(source PropertySource) {
+	this.sources = append(this.sources, source)
+	slog.Debug(fmt.Sprintf("Added property source %T", source))
 }
 
-// Add custom context variables to be evaluated.
-// See env.ExprProcessor for expressions and variables available by default.
-//
-//	var _ = env.Instance().WithContextVariable("runtime", map[string]any{
-//		"NumCPU": runtime.NumCPU(),
-//	})
-func (this *Environment) WithContextVariable(key string, value any) *Environment {
+func (this *Environment) setContextVariable(key string, value any) {
 	this.exprProcessor.Define(key, value)
-	return this
+	this.strictExprProcessor.Define(key, value)
 }

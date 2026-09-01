@@ -22,7 +22,7 @@ type ExprProcessor struct {
 	strict  bool
 }
 
-func ExprProcessorOf(strict bool) *ExprProcessor {
+func NewExprProcessor(strict bool) *ExprProcessor {
 	processor := ExprProcessor{
 		PatternProcessor: *regex.PatternProcessorOf(`\#\#\#\{(?P<complex>([^\$#]\{|[^\{])*?)\}\#\#\#|\#\{(?P<expr>([^\$#]\{|[^\{])*?)\}|\$\{(?P<prop>([^\$#:]\{|[^\{\}:])*)(:(?P<defaultValue>([^\$#]\{|[^\{])*?))?\}`),
 		context:          make(map[string]any),
@@ -53,11 +53,9 @@ func ExprProcessorOf(strict bool) *ExprProcessor {
 func (this *ExprProcessor) Resolve(match *regex.Match,
 	super func(*regex.Match) any) (resolved any) {
 	if !this.strict {
-		defer func() {
-			if recover() != nil {
-				resolved = match.Expr()
-			}
-		}()
+		defer err.Recover(func(e any) {
+			resolved = match.Expr()
+		})
 	}
 	prop := match.NamedGroup("prop")
 	if prop.Present() {
