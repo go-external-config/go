@@ -303,7 +303,7 @@ produces a new UUID on every lookup, which is useful for values that are expecte
 
 ### Encrypting Properties
 
-[RsaPropertySource](https://github.com/go-external-config/go/blob/main/env/RsaPropertySource.go) (available on demand) is useful for decrypting property values in RSA format. One manual step less when conducting production release.  
+[RsaPropertySource](https://github.com/go-external-config/rsa/blob/main/env/RsaPropertySource.go) (available on demand) is useful for decrypting property values in RSA format. One manual step less when conducting production release.  
 Generate an RSA private/public key:
 
 ```bash
