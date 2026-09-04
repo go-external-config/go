@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 
@@ -39,6 +40,7 @@ var contextVariables = make(map[string]any)
 
 type Environment struct {
 	profiles              []string
+	includedProfiles      []string
 	paramsPropertySource  *MapPropertySource
 	environPropertySource *MapPropertySource
 	sources               []PropertySource
@@ -60,6 +62,7 @@ func Instance() *Environment {
 func newEnvironment(activeProfiles string) *Environment {
 	environment := Environment{
 		profiles:            make([]string, 0),
+		includedProfiles:    make([]string, 0),
 		sources:             make([]PropertySource, 0),
 		exprProcessor:       NewExprProcessor(false),
 		strictExprProcessor: NewExprProcessor(true)}
@@ -116,7 +119,7 @@ func (this *Environment) matchesProfiles(profiles ...string) bool {
 	if len(profiles) == 0 {
 		return true
 	}
-	activeProfiles := collections.SliceToSet(this.profiles)
+	activeProfiles := collections.SliceToSet(this.activeProfiles())
 	processor := regex.PatternProcessorOf(regex.NewPatternBuilder().Next("{word:\\w+}|{sign:\\W}").Build())
 	processor.OverrideResolve(func(match *regex.Match,
 		super func(*regex.Match) any) any {
@@ -149,7 +152,13 @@ func (this *Environment) matchesProfiles(profiles ...string) bool {
 
 // last wins
 func (this *Environment) activeProfiles() []string {
-	return this.profiles
+	result := slices.Clone(this.profiles)
+	for _, profile := range this.includedProfiles {
+		if !slices.Contains(result, profile) {
+			result = append(result, profile)
+		}
+	}
+	return result
 }
 
 // first wins
@@ -187,8 +196,10 @@ func (this *Environment) loadApplicationParameters() {
 // application.yaml
 // application-<profile>.yaml
 func (this *Environment) loadApplicationConfiguration(bootstrapProfiles string) {
-	activeProfiles := objects.FirstNonZero(bootstrapProfiles, this.paramsPropertySource.properties["profiles.active"], this.environPropertySource.properties["PROFILES_ACTIVE"])
-	this.profiles = splitProfiles(activeProfiles)
+	this.profiles = splitProfiles(objects.FirstNonZero(bootstrapProfiles, this.paramsPropertySource.properties["profiles.active"], this.environPropertySource.properties["PROFILES_ACTIVE"]))
+	this.includeProfiles(this.environPropertySource.properties["PROFILES_INCLUDE"])
+	this.includeProfiles(this.paramsPropertySource.properties["profiles.include"])
+
 	configName := objects.FirstNonZero(this.paramsPropertySource.properties["config.name"], this.environPropertySource.properties["CONFIG_NAME"], "application")
 	defaultLocation := this.defaultConfigLocation()
 	additionalLocation := objects.FirstNonZero(this.paramsPropertySource.properties["config.additional-location"], this.environPropertySource.properties["CONFIG_ADDITIONALLOCATION"])
@@ -197,11 +208,32 @@ func (this *Environment) loadApplicationConfiguration(bootstrapProfiles string) 
 	extendedConfigLocation := lang.If(len(additionalLocation) == 0, configLocation, additionalLocation+","+configLocation)
 	resolvedConfigLocation := lang.If(len(configLocation) == 0, extendedDefaultLocation, extendedConfigLocation)
 
+	this.discoverProfiles(resolvedConfigLocation, configName)
+	this.sources = this.sources[:0]
+	this.loadConfigurations(resolvedConfigLocation, configName)
+	for _, source := range this.sources {
+		slog.Info(fmt.Sprintf("Loaded configuration from %s", source.Name()))
+	}
+}
+
+func (this *Environment) discoverProfiles(resolvedConfigLocation, configName string) {
+	for {
+		this.sources = this.sources[:0]
+		profileCount := len(this.activeProfiles())
+		this.loadConfigurations(resolvedConfigLocation, configName)
+		if len(this.activeProfiles()) == profileCount {
+			return
+		}
+	}
+}
+
+func (this *Environment) loadConfigurations(resolvedConfigLocation, configName string) {
+	profiles := this.activeProfiles()
 	for _, location := range strings.Split(resolvedConfigLocation, ",") {
-		for i := 0; i <= len(this.profiles); i++ {
+		for i := 0; i <= len(profiles); i++ {
 			profile := defaultProfile
 			if i > 0 {
-				profile = this.profiles[i-1]
+				profile = profiles[i-1]
 			}
 			for _, locationGroup := range strings.Split(location, ";") {
 				this.loadConfiguration(locationGroup, configName, profile)
@@ -257,10 +289,12 @@ func (this *Environment) loadFile(path, fantomExt string) {
 	default:
 		panic(err.NewRuntimeException(fmt.Sprintf("Cannot load from %s as %s file type is not supported. Use extension hint in square brackets like .env[.properties] to derive property source type", path, ext)))
 	}
-	slog.Info(fmt.Sprintf("Loaded configuration from %s", path))
 	this.sources = append(this.sources, result)
 	if result.HasProperty("profiles.active") && len(this.profiles) == 0 {
 		this.profiles = splitProfiles(result.Property("profiles.active"))
+	}
+	if result.HasProperty("profiles.include") {
+		this.includeProfiles(result.Property("profiles.include"))
 	}
 	if result.HasProperty("config.import") {
 		for _, location := range strings.Split(result.Property("config.import"), ",") {
@@ -279,6 +313,14 @@ func (this *Environment) loadImport(path, location string) {
 	location = filepath.ToSlash(location)
 	lang.Assert(!strings.HasSuffix(location, "/"), "Cannot load from location %s defined in %s. Directory import is not supported", location, path)
 	this.loadFile(files.RelativePath(path, location), fantomExt)
+}
+
+func (this *Environment) includeProfiles(profiles string) {
+	for _, profile := range splitProfiles(profiles) {
+		if !slices.Contains(this.includedProfiles, profile) {
+			this.includedProfiles = append(this.includedProfiles, profile)
+		}
+	}
 }
 
 func (this *Environment) envVarCanonicalForm(key string) string {

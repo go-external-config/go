@@ -109,7 +109,14 @@ func splitProfiles(profiles string) []string {
 	if profiles == "" {
 		return nil
 	}
-	return profileSeparator.Split(profiles, -1)
+
+	result := make([]string, 0)
+	for _, profile := range profileSeparator.Split(profiles, -1) {
+		if profile != "" && !slices.Contains(result, profile) {
+			result = append(result, profile)
+		}
+	}
+	return result
 }
 
 func PropertySources() []PropertySource {
