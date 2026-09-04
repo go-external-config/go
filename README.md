@@ -448,7 +448,44 @@ You can use a `profiles.active` `Environment` property to specify which profiles
 profiles.active=dev,hsqldb
 ```
 
-The `profiles.active` property follows the same ordering rules as other properties. The highest `PropertySource` wins. This means that you can specify active profiles in `application.properties` and then replace them by using the command line switch.
+The first `profiles.active` value found in configuration files is used. It can be overridden by the `PROFILES_ACTIVE` environment variable, the `--profiles.active` command-line argument, or profiles set programmatically with `env.SetActiveProfiles`.
+
+Additional profiles can be activated using the `profiles.include` property:
+
+```properties
+profiles.include=kubernetes
+```
+
+Unlike `profiles.active`, `profiles.include` values from configuration files are cumulative. Included profiles are added after the active profiles and follow the same last-wins ordering used for profile-specific configuration files.
+
+Included profiles are added after the active profiles and therefore follow the same last-wins ordering used for profile-specific configuration files. For example:
+
+```properties
+profiles.active=prod
+profiles.include=kubernetes
+```
+
+loads profile-specific configuration in the following order:
+
+```text
+application-prod.properties
+application-kubernetes.properties
+```
+
+Values from `application-kubernetes.properties` can therefore override values from `application-prod.properties`.
+
+Profiles can also be included from profile-specific configuration. For example:
+
+```yaml
+# application-prod.yaml
+profiles:
+  include: kubernetes
+```
+
+Activating the `prod` profile also activates the `kubernetes` profile and loads `application-kubernetes.yaml`.
+
+Includes are resolved transitively. If `application-kubernetes.yaml` includes another profile, its profile-specific configuration is loaded as well. Duplicate and empty profile names are ignored.
+
 
 ### Programmatically Setting Profiles
 
