@@ -24,6 +24,10 @@ import (
 )
 
 var defaultProfile = "default"
+var profilesActiveEnv = "PROFILES_ACTIVE"
+var profilesIncludeEnv = "PROFILES_INCLUDE"
+var profilesActiveProp = "profiles.active"
+var profilesIncludeProp = "profiles.include"
 var profileSeparator = regexp.MustCompile(`\s*,\s*`)
 var locationPattern = regexp.MustCompile(regex.NewPatternBuilder().Next(`{location:.+}\[{fantomExt:\.[\w]+}\]`).Build())
 var envVarCanonicalFormTranslationRule = map[rune]rune{
@@ -167,6 +171,7 @@ func (this *Environment) propertySources() []PropertySource {
 }
 
 // PROFILES_ACTIVE=dev,hsqldb
+// PROFILES_INCLUDE=kubernetes
 func (this *Environment) loadEnvironmentVariables() {
 	environ := MapPropertySourceOf("Environment variables")
 	pattern := regexp.MustCompile(regex.NewPatternBuilder().Next(`{key:[^=\s]+}={value:.*}`).Build())
@@ -180,6 +185,7 @@ func (this *Environment) loadEnvironmentVariables() {
 }
 
 // --profiles.active=dev,hsqldb
+// --profiles.include=kubernetes
 func (this *Environment) loadApplicationParameters() {
 	params := MapPropertySourceOf("Application parameters")
 	pattern := regexp.MustCompile(regex.NewPatternBuilder().Next(`--?{key:[^=\s]+}\s*=?{value:.*}`).Build())
@@ -196,9 +202,9 @@ func (this *Environment) loadApplicationParameters() {
 // application.yaml
 // application-<profile>.yaml
 func (this *Environment) loadApplicationConfiguration(bootstrapProfiles string) {
-	this.profiles = splitProfiles(objects.FirstNonZero(bootstrapProfiles, this.paramsPropertySource.properties["profiles.active"], this.environPropertySource.properties["PROFILES_ACTIVE"]))
-	this.includeProfiles(this.environPropertySource.properties["PROFILES_INCLUDE"])
-	this.includeProfiles(this.paramsPropertySource.properties["profiles.include"])
+	this.profiles = splitProfiles(objects.FirstNonZero(bootstrapProfiles, this.paramsPropertySource.properties[profilesActiveProp], this.environPropertySource.properties[profilesActiveEnv]))
+	this.includeProfiles(this.environPropertySource.properties[profilesIncludeEnv])
+	this.includeProfiles(this.paramsPropertySource.properties[profilesIncludeProp])
 
 	configName := objects.FirstNonZero(this.paramsPropertySource.properties["config.name"], this.environPropertySource.properties["CONFIG_NAME"], "application")
 	defaultLocation := this.defaultConfigLocation()
@@ -290,11 +296,11 @@ func (this *Environment) loadFile(path, fantomExt string) {
 		panic(err.NewRuntimeException(fmt.Sprintf("Cannot load from %s as %s file type is not supported. Use extension hint in square brackets like .env[.properties] to derive property source type", path, ext)))
 	}
 	this.sources = append(this.sources, result)
-	if result.HasProperty("profiles.active") && len(this.profiles) == 0 {
-		this.profiles = splitProfiles(result.Property("profiles.active"))
+	if result.HasProperty(profilesActiveProp) && len(this.profiles) == 0 {
+		this.profiles = splitProfiles(result.Property(profilesActiveProp))
 	}
-	if result.HasProperty("profiles.include") {
-		this.includeProfiles(result.Property("profiles.include"))
+	if result.HasProperty(profilesIncludeProp) {
+		this.includeProfiles(result.Property(profilesIncludeProp))
 	}
 	if result.HasProperty("config.import") {
 		for _, location := range strings.Split(result.Property("config.import"), ",") {
