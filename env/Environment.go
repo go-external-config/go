@@ -215,6 +215,9 @@ func (this *Environment) loadApplicationConfiguration(bootstrapProfiles string) 
 	resolvedConfigLocation := lang.If(len(configLocation) == 0, extendedDefaultLocation, extendedConfigLocation)
 
 	this.discoverProfiles(resolvedConfigLocation, configName)
+	if profiles := this.activeProfiles(); len(profiles) > 0 {
+		slog.Info(fmt.Sprintf("Active profiles: %s", strings.Join(profiles, ", ")))
+	}
 	this.sources = this.sources[:0]
 	this.loadConfigurations(resolvedConfigLocation, configName)
 	for _, source := range this.sources {
