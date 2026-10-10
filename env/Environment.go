@@ -13,7 +13,6 @@ import (
 
 	"github.com/go-errr/go/err"
 	"github.com/go-external-config/go/files"
-	"github.com/go-external-config/go/str"
 	"github.com/go-jang/go/lang"
 	"github.com/go-jang/go/util/collections"
 	"github.com/go-jang/go/util/concurrent"
@@ -30,12 +29,6 @@ var profilesActiveProp = "profiles.active"
 var profilesIncludeProp = "profiles.include"
 var profileSeparator = regexp.MustCompile(`\s*,\s*`)
 var locationPattern = regexp.MustCompile(regex.NewPatternBuilder().Next(`{location:.+}\[{fantomExt:\.[\w]+}\]`).Build())
-var envVarCanonicalFormTranslationRule = map[rune]rune{
-	'.': '_',
-	'[': '_',
-	']': '_',
-	'-': 0, // delete
-}
 
 var environment *Environment
 var environmentMu sync.Mutex
@@ -45,8 +38,8 @@ var contextVariables = make(map[string]any)
 type Environment struct {
 	profiles              []string
 	includedProfiles      []string
-	paramsPropertySource  *MapPropertySource
-	environPropertySource *MapPropertySource
+	paramsPropertySource  *ParamsPropertySource
+	environPropertySource *EnvPropertySource
 	sources               []PropertySource
 	exprProcessor         *ExprProcessor
 	strictExprProcessor   *ExprProcessor
@@ -65,27 +58,29 @@ func Instance() *Environment {
 
 func newEnvironment(activeProfiles string) *Environment {
 	environment := Environment{
-		profiles:            make([]string, 0),
-		includedProfiles:    make([]string, 0),
-		sources:             make([]PropertySource, 0),
-		exprProcessor:       NewExprProcessor(false),
-		strictExprProcessor: NewExprProcessor(true)}
+		profiles:              make([]string, 0),
+		includedProfiles:      make([]string, 0),
+		sources:               make([]PropertySource, 0),
+		exprProcessor:         NewExprProcessor(false),
+		strictExprProcessor:   NewExprProcessor(true),
+		environPropertySource: NewEnvPropertySource(),
+		paramsPropertySource:  NewParamsPropertySource(),
+	}
 
 	for key, value := range contextVariables {
 		environment.setContextVariable(key, value)
 	}
 
-	environment.loadEnvironmentVariables()
-	environment.loadApplicationParameters()
 	environment.loadApplicationConfiguration(activeProfiles)
+
 	environment.addPropertySource(NewRandomValuePropertySource())
 	environment.addPropertySource(NewBase64PropertySource())
 	environment.addPropertySource(NewCachedPropertySource())
-
 	for _, source := range registeredPropertySources {
 		environment.addPropertySource(source)
 	}
-
+	environment.addPropertySource(environment.environPropertySource)
+	environment.addPropertySource(environment.paramsPropertySource)
 	return &environment
 }
 
@@ -95,17 +90,9 @@ func (this *Environment) property(key string) string {
 }
 
 func (this *Environment) lookupRawProperty(key string) *optional.Optional[string] {
-	if this.paramsPropertySource.HasProperty(key) {
-		return optional.OfValue(this.paramsPropertySource.Property(key))
-	} else if this.environPropertySource.HasProperty(key) {
-		return optional.OfValue(this.environPropertySource.Property(key))
-	} else if envCanonical := this.envVarCanonicalForm(key); this.environPropertySource.HasProperty(envCanonical) {
-		return optional.OfValue(this.environPropertySource.Property(envCanonical))
-	} else {
-		for i := len(this.sources) - 1; i >= 0; i-- {
-			if this.sources[i].HasProperty(key) {
-				return optional.OfValue(this.sources[i].Property(key))
-			}
+	for i := len(this.sources) - 1; i >= 0; i-- {
+		if this.sources[i].HasProperty(key) {
+			return optional.OfValue(this.sources[i].Property(key))
 		}
 	}
 	return optional.OfEmpty[string]()
@@ -168,34 +155,6 @@ func (this *Environment) activeProfiles() []string {
 // first wins
 func (this *Environment) propertySources() []PropertySource {
 	return collections.ReverseSlice(this.sources)
-}
-
-// PROFILES_ACTIVE=dev,hsqldb
-// PROFILES_INCLUDE=kubernetes
-func (this *Environment) loadEnvironmentVariables() {
-	environ := MapPropertySourceOf("Environment variables")
-	pattern := regexp.MustCompile(regex.NewPatternBuilder().Next(`{key:[^=\s]+}={value:.*}`).Build())
-	for _, keyValue := range os.Environ() {
-		for _, m := range pattern.FindAllStringSubmatchIndex(keyValue, -1) {
-			match := regex.MatchOf(pattern, keyValue, m)
-			environ.SetProperty(match.NamedGroup("key").Value(), match.NamedGroup("value").Value())
-		}
-	}
-	this.environPropertySource = environ
-}
-
-// --profiles.active=dev,hsqldb
-// --profiles.include=kubernetes
-func (this *Environment) loadApplicationParameters() {
-	params := MapPropertySourceOf("Application parameters")
-	pattern := regexp.MustCompile(regex.NewPatternBuilder().Next(`--?{key:[^=\s]+}\s*=?{value:.*}`).Build())
-	for _, keyValue := range os.Args[1:] {
-		for _, m := range pattern.FindAllStringSubmatchIndex(keyValue, -1) {
-			match := regex.MatchOf(pattern, keyValue, m)
-			params.SetProperty(match.NamedGroup("key").Value(), match.NamedGroup("value").Value())
-		}
-	}
-	this.paramsPropertySource = params
 }
 
 // last wins
@@ -330,10 +289,6 @@ func (this *Environment) includeProfiles(profiles string) {
 			this.includedProfiles = append(this.includedProfiles, profile)
 		}
 	}
-}
-
-func (this *Environment) envVarCanonicalForm(key string) string {
-	return strings.ToUpper(str.ReplaceChars(key, envVarCanonicalFormTranslationRule))
 }
 
 func (this *Environment) isTest() bool {
