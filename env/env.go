@@ -16,6 +16,10 @@ import (
 
 const ValueTag = "value"
 
+func HasProperty(key string) bool {
+	return Instance().hasProperty(key)
+}
+
 func Property(key string) string {
 	return Instance().property(key)
 }

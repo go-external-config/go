@@ -84,6 +84,10 @@ func newEnvironment(activeProfiles string) *Environment {
 	return &environment
 }
 
+func (this *Environment) hasProperty(key string) bool {
+	return this.lookupRawProperty(key).Present()
+}
+
 func (this *Environment) property(key string) string {
 	return fmt.Sprint(this.resolveRequiredPlaceholders(this.lookupRawProperty(key).
 		OrElsePanic("No value present for %s", key)))
