@@ -28,7 +28,7 @@ To provide a concrete example, suppose you develop a component that uses a name 
 name := env.Value[string]("${name}")
 ```
 
-For a container-managed bean:
+For container-managed beans, use the `value` field tag, see [go-beans](https://github.com/go-beans/go)
 
 ```go
 name string `value:"${name}"`
@@ -118,7 +118,7 @@ For example, you might have the following in your `application.properties` file:
 
 ```properties
 application.name=myapp
-config.import=./dev.properties
+config.import=dev.properties
 ```
 
 This will trigger the import of a `dev.properties` file in current directory (if such a file exists). Values from the imported `dev.properties` will take precedence over the file that triggered the import. In the above example, the `dev.properties` could redefine `application.name` to a different value.
@@ -184,9 +184,7 @@ config.import=/etc/config/myconfig[.yaml]
 `go-external-config` uses Go's standard `log/slog` API. Logging levels
 are controlled by the application's `slog` configuration.
 
-Enable `INFO` logging to see which configuration files were loaded.
-
-See also [go-log4g](https://github.com/go-log4g/core).
+Enable `INFO` logging to see which configuration files were loaded. (See also [go-log4g](https://github.com/go-log4g/core))
 
 ### Testing
 
@@ -258,11 +256,11 @@ server.threads.keepalive=#{${server.threads.max} / 4}
 
 ## Properties Preprocessing
 
-go-external-config provides the hook point necessary to modify values contained in the Environment. You can load property from external locations, for example AWS Systems Manager Parameter Store etc. See how this is implemented and works for Base64 decoding, random values generation and RSA decryption.
+go-external-config provides the hook point necessary to modify values contained in the Environment. You can load property from external locations, for example AWS Systems Manager Parameter Store etc. 
 
 ### Base64 Encoding
 
-[Base64PropertySource](https://github.com/go-external-config/go/blob/main/env/Base64PropertySource.go) (available by default) is useful for decoding property values in Base64 format as shown in the following example:
+[Base64PropertySource](https://github.com/go-external-config/go/blob/main/env/Base64PropertySource.go) is useful for decoding property values in Base64 format as shown in the following example:
 
 ```properties
 hidden=base64:aGlkZGVu
@@ -301,38 +299,57 @@ request.id=${random.uuid}
 
 produces a new UUID on every lookup, which is useful for values that are expected to be unique, such as request, message, or task identifiers.
 
-### Encrypting Properties
+### Available Extensions
 
-[RsaPropertySource](https://github.com/go-external-config/rsa/blob/main/env/RsaPropertySource.go) (available on demand) is useful for decrypting property values in RSA format. One manual step less when conducting production release.  
-Generate an RSA private/public key:
+| Extension | Description |
+|-----------|-------------|
+| [AWS](https://github.com/go-external-config/aws) | Resolve properties from AWS Systems Manager Parameter Store and AWS Secrets Manager. |
+| [Vault](https://github.com/go-external-config/vault) | Resolve properties from HashiCorp Vault. |
+| [Consul](https://github.com/go-external-config/consul) | Resolve properties from HashiCorp Consul. |
+| [RSA](https://github.com/go-external-config/rsa) | Decrypt RSA-encrypted configuration properties. |
 
-```bash
-openssl genpkey -algorithm RSA -out private2048.pem -pkeyopt rsa_keygen_bits:2048
-openssl rsa -pubout -in private2048.pem -out public2048.pem
-```
+Extensions are enabled simply by importing their packages.
 
-Encrypt password using public key:
-
-```bash
-echo -n "dbSecret123" | openssl pkeyutl -encrypt \
-  -pubin -inkey public2048.pem \
-  -pkeyopt rsa_padding_mode:oaep \
-  -pkeyopt rsa_oaep_md:sha256 | base64
-```
-
-Enable RSA decryption in the code at the beginning of the main package:
+For example, to enable AWS Parameter Store and Secrets Manager support:
 
 ```go
-import _ "github.com/go-external-config/rsa"
+import _ "github.com/go-external-config/aws"
 ```
 
-Safely commit encrypted property with the code at feature development time.
+The extension automatically registers its property sources during Go package initialization. No explicit registration code is required.
 
-```properties
-my.secret=RSA:m+WQ5zMBqwMmEEP...
+Once registered, extensions participate in the standard property resolution process. Refer to each extension's documentation for its configuration requirements and supported property syntax.
+
+### Custom Preprocessors
+
+Applications can implement custom property preprocessors to intercept property lookups and provide additional resolution logic.
+
+Property lookups can be intercepted in two ways:
+
+- By key - recognize specific property keys or patterns and resolve them dynamically.
+- By value - recognize special values returned by existing property sources and transform or resolve them.
+
+For example, the [AWS extension](https://github.com/go-external-config/aws) supports both:
+
+- `aws-param.my/parameter` - resolves a property directly from AWS Parameter Store.
+- `aws-param:my/parameter` - resolves an AWS parameter reference stored as a property value.
+
+Custom preprocessors implement the `env.PropertySource` interface:
+
+```go
+type PropertySource interface {
+    Name() string
+    HasProperty(key string) bool
+    Property(key string) string
+    Properties() map[string]string
+}
 ```
 
-Provide `rsa.privateKey.path` on the environment to decrypt at runtime.
+Register a preprocessor using `env.RegisterPropertySource()`:
+
+```go
+env.RegisterPropertySource(NewMyPropertyPreprocessor())
+```
 
 ## Working With YAML
 
@@ -377,26 +394,26 @@ my.servers[1]=another.example.com
 
 ## Configuration Properties
 
-Using the `env.Value[string]("${property}")` to inject configuration properties can sometimes be cumbersome, especially if you are working with multiple properties or your data is hierarchical in nature. go-external-config provides an alternative method of working with properties that lets strongly typed fields govern and validate the configuration of your application. It is possible to bind struct properties as shown in the following example:
+Using `env.Value[string]("${property}")` to inject configuration properties can become cumbersome when working with multiple properties or hierarchical configuration. `go-external-config` provides an alternative approach that binds configuration properties directly to strongly typed Go structs.
+
+For example:
 
 ```go
 var db struct {
-    Host  string
-    Port  int
-    Username string
-    Password string
+  Host string
+  Port int
+  User string
+  Pass string
 }
 
 env.ConfigurationProperties("db", &db)
 ```
 
+Property values are automatically converted to the corresponding Go field types during binding. In this example, `Port` is converted to an `int`, while the remaining fields are populated as strings. The same automatic type conversion applies when resolving individual properties using `env.Value[T]()`. 
+
 > Host value will be looked-up in `db.Host` and `db.host` properties
 
-### Properties Conversion
-
-go-external-config attempts to coerce the external application properties to the right type when it binds the `env.Value[type]()` or the `env.ConfigurationProperties()`.
-
-Example of initializing `http.Client` and `redis.Client` with default properties and overrides for the `component`:
+Example of initializing `http.Client` and `redis.Client` with shared default properties and overrides for the specific `component`:
 
 ```go
 var httpClient *http.Client = env.ConfigurationProperties("component.httpClient", env.ConfigurationProperties("httpClient", &http.Client{
@@ -432,6 +449,8 @@ component:
     writeTimeout: '#{30 * time.Second}'
   ...
 ```
+
+The resulting clients inherit the shared configuration, with component-specific properties taking precedence. For example, `component.redis.poolSize` overrides `redis.poolSize`, while `redis.minIdleConns` retains its original value.
 
 ## Profiles
 
@@ -503,8 +522,4 @@ go get github.com/go-external-config/go
 
 ## See also
 
-[github.com/go-external-config/rsa](https://github.com/go-external-config/rsa)  
-[github.com/go-external-config/aws](https://github.com/go-external-config/aws)  
-[github.com/go-external-config/vault](https://github.com/go-external-config/vault)  
-[github.com/go-external-config/consul](https://github.com/go-external-config/consul)  
 [github.com/go-beans/go](https://github.com/go-beans/go)
